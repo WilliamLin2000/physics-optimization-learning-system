@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physics & Optimization Learning System</title>
+<style>
+:root {
+  --color-background-primary: #ffffff;
+  --color-background-secondary: #f5f4ee;
+  --color-background-tertiary: #faf9f5;
+  --color-background-info: #E6F1FB;
+  --color-text-primary: #2c2c2a;
+  --color-text-secondary: #5f5e5a;
+  --color-text-tertiary: #888780;
+  --color-text-info: #185FA5;
+  --color-border-tertiary: rgba(0,0,0,0.08);
+  --color-border-secondary: rgba(0,0,0,0.15);
+  --color-border-primary: rgba(0,0,0,0.25);
+  --border-radius-md: 8px;
+  --border-radius-lg: 12px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-background-primary: #262623;
+    --color-background-secondary: #2e2e2b;
+    --color-background-tertiary: #1a1a18;
+    --color-background-info: #0C447C;
+    --color-text-primary: #e0ddd1;
+    --color-text-secondary: #9c9a92;
+    --color-text-tertiary: #73726c;
+    --color-text-info: #85B7EB;
+    --color-border-tertiary: rgba(255,255,255,0.08);
+    --color-border-secondary: rgba(255,255,255,0.15);
+    --color-border-primary: rgba(255,255,255,0.25);
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0;font-family:"Times New Roman", Times, serif}
+html,body{height:100%}
+body{background:var(--color-background-tertiary);color:var(--color-text-primary)}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+#app{display:flex;height:100vh;min-height:700px;background:var(--color-background-tertiary)}
+#sidebar{width:270px;min-width:270px;background:var(--color-background-primary);border-right:0.5px solid var(--color-border-tertiary);display:flex;flex-direction:column;overflow:hidden}
+
+#subject-switch{padding:14px;border-bottom:0.5px solid var(--color-border-tertiary)}
+#subject-label{font-size:12px;color:var(--color-text-tertiary);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px}
+#subject-pills{display:flex;background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:3px;gap:2px}
+.subject-pill{flex:1;padding:7px 10px;font-size:14px;font-weight:500;text-align:center;border-radius:6px;cursor:pointer;color:var(--color-text-secondary);user-select:none}
+.subject-pill.active{background:var(--color-background-primary);color:var(--color-text-primary);box-shadow:0 0 0 0.5px var(--color-border-tertiary)}
+.subject-pill:hover:not(.active){color:var(--color-text-primary)}
+
+#progress-box{padding:12px 14px;border-bottom:0.5px solid var(--color-border-tertiary)}
+#progress-label{font-size:12px;color:var(--color-text-tertiary);margin-bottom:6px;display:flex;justify-content:space-between}
+#progress-bar{height:4px;background:var(--color-background-secondary);border-radius:2px;overflow:hidden}
+#progress-fill{height:100%;background:var(--color-text-info);transition:width .3s}
+
+#sidebar-scroll{overflow-y:auto;flex:1;padding:8px}
+.level-section{margin-bottom:4px}
+.level-header{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:var(--border-radius-md);cursor:pointer;user-select:none;font-size:14px}
+.level-header:hover{background:var(--color-background-secondary)}
+.level-badge{font-size:11px;padding:2px 7px;border-radius:10px;font-weight:500}
+.lv-beginner .level-badge{background:#EAF3DE;color:#3B6D11}
+.lv-intermediate .level-badge{background:#E6F1FB;color:#185FA5}
+.lv-advanced .level-badge{background:#EEEDFE;color:#534AB7}
+.lv-expert .level-badge{background:#FAECE7;color:#993C1D}
+.level-count{color:var(--color-text-tertiary);font-size:12px}
+.chevron{margin-left:auto;color:var(--color-text-tertiary);font-size:10px;transition:transform .2s}
+.level-section.open .chevron{transform:rotate(90deg)}
+.level-section:not(.open) .lesson-list{display:none}
+.lesson-list{padding:2px 0 4px 24px}
+.lesson-item{padding:6px 10px;font-size:14px;color:var(--color-text-secondary);border-radius:6px;cursor:pointer;line-height:1.4;display:flex;align-items:center;gap:8px}
+.lesson-item:hover{background:var(--color-background-secondary);color:var(--color-text-primary)}
+.lesson-item.active{background:var(--color-background-info);color:var(--color-text-info);font-weight:500}
+.check{width:12px;height:12px;border-radius:50%;border:1px solid var(--color-border-secondary);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;color:transparent}
+.lesson-item.done .check{background:#1D9E75;border-color:#1D9E75;color:white}
+
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+#api-banner{padding:10px 18px;font-size:13px;background:#FAEEDA;color:#854F0B;border-bottom:0.5px solid var(--color-border-tertiary);text-align:center}
+@media (prefers-color-scheme: dark){#api-banner{background:#412402;color:#FAC775}}
+#content-area{flex:1;overflow-y:auto;padding:22px 26px}
+#lesson-header{margin-bottom:16px;display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+#lesson-header-left{flex:1;min-width:0}
+#lesson-tag{font-size:12px;font-weight:500;padding:3px 8px;border-radius:10px;display:inline-block;margin-bottom:8px}
+.tag-beginner{background:#EAF3DE;color:#3B6D11}
+.tag-intermediate{background:#E6F1FB;color:#185FA5}
+.tag-advanced{background:#EEEDFE;color:#534AB7}
+.tag-expert{background:#FAECE7;color:#993C1D}
+#lesson-title{font-size:24px;font-weight:500;color:var(--color-text-primary);line-height:1.3;margin-bottom:6px}
+#lesson-desc{font-size:16px;color:var(--color-text-secondary);line-height:1.6}
+#mark-btn{padding:7px 12px;font-size:13px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);cursor:pointer;background:var(--color-background-primary);color:var(--color-text-primary);white-space:nowrap;flex-shrink:0}
+#mark-btn:hover{background:var(--color-background-secondary)}
+#mark-btn.done{background:#E1F5EE;color:#0F6E56;border-color:#5DCAA5}
+
+#tabs{display:flex;gap:2px;margin-bottom:16px;border-bottom:0.5px solid var(--color-border-tertiary)}
+.tab{padding:8px 16px;font-size:15px;color:var(--color-text-secondary);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-0.5px}
+.tab:hover{color:var(--color-text-primary)}
+.tab.active{color:var(--color-text-primary);border-bottom-color:var(--color-text-primary);font-weight:500}
+
+.section-card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:16px 20px;margin-bottom:14px}
+.section-card h3{font-size:16px;font-weight:500;margin-bottom:10px;color:var(--color-text-primary)}
+.concept-body{font-size:16px;line-height:1.7;color:var(--color-text-secondary)}
+.concept-body p{margin-bottom:10px}
+.concept-body strong{color:var(--color-text-primary);font-weight:700}
+.formula{font-style:italic;font-size:16px;background:var(--color-background-secondary);padding:10px 14px;border-radius:var(--border-radius-md);margin:10px 0;color:var(--color-text-primary);overflow-x:auto;white-space:nowrap}
+
+#viz-container{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);margin-bottom:14px;overflow:hidden}
+#viz-title{padding:14px 18px;font-size:17px;font-weight:500;border-bottom:0.5px solid var(--color-border-tertiary);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+#viz-subtitle{font-size:14px;color:var(--color-text-tertiary);font-weight:400;font-style:italic}
+#viz-canvas-wrap{padding:18px;display:flex;justify-content:center;background:var(--color-background-secondary)}
+canvas{display:block;max-width:100%;background:var(--color-background-primary);border-radius:var(--border-radius-md)}
+
+.param-panel{padding:16px 22px;border-top:0.5px solid var(--color-border-tertiary);display:flex;flex-direction:column;gap:14px}
+.param-row{display:grid;grid-template-columns:180px 1fr 130px;gap:16px;align-items:center}
+.param-label-group{display:flex;flex-direction:column;gap:2px}
+.param-name{font-size:16px;font-weight:500;color:var(--color-text-primary);font-style:italic}
+.param-desc{font-size:13px;color:var(--color-text-secondary);line-height:1.4}
+.param-control{display:flex;align-items:center;gap:10px}
+.param-control input[type=range]{flex:1;min-width:120px}
+.param-control select{padding:4px 8px;font-size:14px;border:0.5px solid var(--color-border-secondary);border-radius:6px;font-family:inherit;background:var(--color-background-primary);color:var(--color-text-primary)}
+.param-value{font-size:16px;font-weight:500;color:var(--color-text-info);background:var(--color-background-info);padding:4px 10px;border-radius:6px;text-align:center;min-width:80px}
+.param-min-max{font-size:12px;color:var(--color-text-tertiary);display:flex;justify-content:space-between;margin-top:2px}
+.viz-btn{font-size:13px;padding:6px 14px;border:0.5px solid var(--color-border-secondary);border-radius:6px;cursor:pointer;background:var(--color-background-primary);color:var(--color-text-primary)}
+.viz-btn:hover{background:var(--color-background-secondary)}
+
+.viz-legend{display:flex;gap:20px;padding:12px 22px;border-top:0.5px solid var(--color-border-tertiary);font-size:14px;color:var(--color-text-secondary);flex-wrap:wrap;background:var(--color-background-secondary)}
+.leg-item{display:flex;align-items:center;gap:8px}
+.leg-swatch{width:14px;height:14px;border-radius:3px;flex-shrink:0}
+
+.ex-reveal{font-size:13px;padding:5px 12px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);cursor:pointer;background:var(--color-background-primary);color:var(--color-text-secondary)}
+.ex-reveal:hover{background:var(--color-background-secondary)}
+
+#ai-area{border-top:0.5px solid var(--color-border-tertiary);padding:14px 22px;background:var(--color-background-primary)}
+#ai-head{font-size:13px;font-weight:500;color:var(--color-text-secondary);margin-bottom:8px;display:flex;align-items:center;gap:8px}
+#ai-indicator{width:6px;height:6px;border-radius:50%;background:#1D9E75}
+#ai-row{display:flex;gap:8px}
+#ai-input{flex:1;padding:8px 12px;font-size:14px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary);font-family:inherit}
+#ai-input:focus{outline:none;border-color:var(--color-border-primary)}
+#ai-btn{padding:8px 14px;font-size:13px;font-weight:500;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);cursor:pointer;background:var(--color-background-primary);color:var(--color-text-primary);white-space:nowrap}
+#ai-btn:hover{background:var(--color-background-secondary)}
+#ai-messages{max-height:180px;overflow-y:auto;margin-top:10px;display:flex;flex-direction:column;gap:8px}
+.ai-bubble{font-size:14px;line-height:1.6;padding:10px 12px;border-radius:var(--border-radius-md);white-space:pre-wrap}
+.ai-bubble.user{background:var(--color-background-secondary);color:var(--color-text-secondary);align-self:flex-end;max-width:80%}
+.ai-bubble.assistant{background:var(--color-background-info);color:var(--color-text-info);max-width:90%}
+.ai-bubble.loading{color:var(--color-text-tertiary);font-style:italic}
+.quick-chips{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.chip{font-size:12px;padding:4px 10px;border:0.5px solid var(--color-border-tertiary);border-radius:12px;cursor:pointer;color:var(--color-text-secondary);background:var(--color-background-primary)}
+.chip:hover{background:var(--color-background-secondary);color:var(--color-text-primary)}
+
+#settings-btn{position:absolute;top:10px;right:14px;padding:4px 10px;font-size:12px;border:0.5px solid var(--color-border-secondary);border-radius:6px;cursor:pointer;background:var(--color-background-primary);color:var(--color-text-primary);z-index:10}
+#settings-btn:hover{background:var(--color-background-secondary)}
+#settings-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center}
+#settings-modal.open{display:flex}
+.settings-box{background:var(--color-background-primary);padding:24px;border-radius:var(--border-radius-lg);width:440px;max-width:90vw;border:0.5px solid var(--color-border-tertiary)}
+.settings-box h3{font-size:18px;margin-bottom:12px;color:var(--color-text-primary)}
+.settings-box p{font-size:14px;color:var(--color-text-secondary);line-height:1.6;margin-bottom:10px}
+.settings-box input{width:100%;padding:8px 12px;font-size:14px;border:0.5px solid var(--color-border-secondary);border-radius:6px;background:var(--color-background-primary);color:var(--color-text-primary);margin-top:8px;font-family:inherit}
+.settings-buttons{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+.settings-box code{background:var(--color-background-secondary);padding:1px 6px;border-radius:4px;font-size:12px}
+
+@media (max-width: 900px){.param-row{grid-template-columns:1fr;gap:6px}}
+</style>
+</head>
+<body>
+<h2 class="sr-only">Physics and Optimization learning system</h2>
+
+<div id="app">
+<div id="sidebar">
+  <div id="subject-switch">
+    <div id="subject-label">Subject</div>
+    <div id="subject-pills">
+      <div class="subject-pill active" data-subj="physics" onclick="switchSubject('physics')">Physics</div>
+      <div class="subject-pill" data-subj="optimization" onclick="switchSubject('optimization')">Optimization</div>
+    </div>
+  </div>
+  <div id="progress-box">
+    <div id="progress-label"><span>Progress</span><span id="progress-text">0 / 0</span></div>
+    <div id="progress-bar"><div id="progress-fill" style="width:0%"></div></div>
+  </div>
+  <div id="sidebar-scroll"></div>
+</div>
+
+<div id="main" style="position:relative">
+  <button id="settings-btn" onclick="openSettings()">⚙ AI key</button>
+  <div id="api-banner" style="display:none">AI Tutor is ready. Set up your Anthropic API key to enable it.</div>
+  <div id="content-area">
+    <div id="lesson-header">
+      <div id="lesson-header-left">
+        <div id="lesson-tag"></div>
+        <div id="lesson-title"></div>
+        <div id="lesson-desc"></div>
+      </div>
+      <button id="mark-btn" onclick="toggleDone()">Mark complete</button>
+    </div>
+    <div id="tabs">
+      <div class="tab active" onclick="switchTab('concept')">Concept</div>
+      <div class="tab" onclick="switchTab('visualization')">Visualization</div>
+      <div class="tab" onclick="switchTab('exercises')">Exercises</div>
+    </div>
+    <div id="tab-concept"></div>
+    <div id="tab-visualization" style="display:none"></div>
+    <div id="tab-exercises" style="display:none"></div>
+  </div>
+  <div id="ai-area">
+    <div id="ai-head"><span id="ai-indicator"></span>AI Tutor — ask anything about this lesson</div>
+    <div id="ai-row">
+      <input id="ai-input" type="text" placeholder="e.g. Give me a real-world example...">
+      <button id="ai-btn" onclick="askAI()">Ask</button>
+    </div>
+    <div class="quick-chips" id="quick-chips"></div>
+    <div id="ai-messages"></div>
+  </div>
+</div>
+</div>
+
+<div id="settings-modal">
+  <div class="settings-box">
+    <h3>AI Tutor setup</h3>
+    <p>Paste your Anthropic API key to enable the AI Tutor. Get one at <code>console.anthropic.com</code>. The key is stored only in your browser (localStorage) and is never sent anywhere except to Anthropic.</p>
+    <p style="color:#854F0B;font-size:13px"><strong>Note:</strong> anyone who uses this file on your computer will be able to use your key, since it is saved in the browser. Remove it with the Clear button when you're done.</p>
+    <input type="password" id="api-key-input" placeholder="sk-ant-...">
+    <div class="settings-buttons">
+      <button class="viz-btn" onclick="clearKey()">Clear</button>
+      <button class="viz-btn" onclick="closeSettings()">Cancel</button>
+      <button class="viz-btn" style="background:var(--color-background-info);color:var(--color-text-info);border-color:var(--color-text-info)" onclick="saveKey()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const FONT = '"Times New Roman", Times, serif';
+
+function getApiKey(){try{return localStorage.getItem('anthropic_api_key')||'';}catch(e){return '';}}
+function openSettings(){document.getElementById('api-key-input').value=getApiKey();document.getElementById('settings-modal').classList.add('open');}
+function closeSettings(){document.getElementById('settings-modal').classList.remove('open');}
+function saveKey(){try{localStorage.setItem('anthropic_api_key',document.getElementById('api-key-input').value.trim());}catch(e){}closeSettings();}
+function clearKey(){try{localStorage.removeItem('anthropic_api_key');}catch(e){}document.getElementById('api-key-input').value='';closeSettings();}
+
+const CURRICULUM = {
+physics: {title:'Physics', levels:[
+  {level:'beginner',label:'Beginner',lessons:[
+    {id:'p_forces',title:'Forces & Newton\'s laws',desc:'How forces cause motion and the three fundamental laws of classical mechanics.',
+     concept:`<p>A <strong>force</strong> is a push or pull that changes motion. Forces are vectors — magnitude and direction.</p>
+<p><strong>Newton\'s first law</strong> (inertia): an object at rest stays at rest unless acted on by a net force.</p>
+<p><strong>Newton\'s second law</strong>:</p>
+<div class="formula">F = m × a</div>
+<p><strong>Newton\'s third law</strong>: every action has an equal and opposite reaction.</p>`,
+     viz:'forces',vizSubtitle:'Watch the block accelerate as you change mass and force',
+     exercises:[{q:'A 5 kg box is pushed with 20 N. Find its acceleration.',a:'a = F/m = 20/5 = 4 m/s²'},{q:'A 1200 kg car decelerates at 3 m/s². Find the braking force.',a:'F = ma = 3600 N'}]},
+    {id:'p_kinematics',title:'Kinematics — motion equations',desc:'Describe position, velocity, and acceleration of moving objects.',
+     concept:`<p><strong>Kinematics</strong> describes motion without its causes. For constant acceleration:</p>
+<div class="formula">v = v₀ + at</div>
+<div class="formula">x = x₀ + v₀t + ½at²</div>
+<div class="formula">v² = v₀² + 2a(x − x₀)</div>`,
+     viz:'projectile',vizSubtitle:'Adjust launch speed and angle to see the trajectory',
+     exercises:[{q:'Ball thrown at v₀ = 20 m/s at 45°. Maximum height?',a:'h ≈ 10.2 m'},{q:'Car from 0 to 30 m/s in 5 s. Distance?',a:'x = 75 m'}]},
+    {id:'p_energy',title:'Work, energy & power',desc:'How energy is transferred, stored, and transformed in physical systems.',
+     concept:`<p><strong>Work</strong> is force times distance:</p>
+<div class="formula">W = F × d × cos(θ)</div>
+<div class="formula">KE = ½mv²   (kinetic energy)</div>
+<div class="formula">PE = mgh    (gravitational potential)</div>
+<div class="formula">P = W/t     (power)</div>`,
+     viz:'energy',vizSubtitle:'See PE convert to KE as the ball falls',
+     exercises:[{q:'2 kg ball at 5 m/s. Kinetic energy?',a:'KE = 25 J'},{q:'Work to lift 10 kg by 2 m?',a:'W = 196 J'}]},
+  ]},
+  {level:'intermediate',label:'Intermediate',lessons:[
+    {id:'p_oscillations',title:'Oscillations & waves',desc:'Periodic motion, simple harmonic motion, and wave propagation.',
+     concept:`<p><strong>Simple harmonic motion (SHM)</strong>: restoring force proportional to displacement.</p>
+<div class="formula">F = −kx</div>
+<div class="formula">T = 2π √(m/k)</div>
+<div class="formula">x(t) = A·cos(ωt + φ)</div>`,
+     viz:'oscillations',vizSubtitle:'Live spring oscillation with position–time trace',
+     exercises:[{q:'k = 100 N/m, m = 0.25 kg. Find T.',a:'T ≈ 0.314 s'},{q:'If amplitude doubles, how does vmax change?',a:'vmax = Aω doubles.'}]},
+    {id:'p_momentum',title:'Momentum & collisions',desc:'Conservation of momentum in collisions between objects.',
+     concept:`<p><strong>Momentum</strong>: p = mv. In an isolated system:</p>
+<div class="formula">m₁v₁ + m₂v₂ = m₁v₁' + m₂v₂'</div>
+<p><strong>Elastic</strong>: KE conserved. <strong>Inelastic</strong>: KE lost. <strong>Perfectly inelastic</strong>: objects stick.</p>`,
+     viz:'momentum',vizSubtitle:'Perfectly inelastic collision simulation',
+     exercises:[{q:'3 kg at 4 m/s hits 1 kg at rest, sticks. Final v?',a:'v = 3 m/s'},{q:'Impulse for F = 50 N over 0.4 s?',a:'J = 20 N·s'}]},
+    {id:'p_thermo',title:'Thermodynamics basics',desc:'Laws of heat, energy, and entropy governing thermal systems.',
+     concept:`<p><strong>First law</strong>: ΔU = Q − W (energy conservation).</p>
+<p><strong>Second law</strong>: entropy never decreases. Heat flows hot → cold.</p>
+<div class="formula">PV = nRT   (ideal gas)</div>
+<div class="formula">η = 1 − Tc/Th   (Carnot efficiency)</div>`,
+     viz:'thermo',vizSubtitle:'Heat flow and Carnot engine efficiency',
+     exercises:[{q:'Th = 500 K, Tc = 300 K. Carnot η?',a:'η = 40%'},{q:'Why η < 1 for real engines?',a:'Tc > 0 and friction, heat loss, irreversibility.'}]},
+  ]},
+  {level:'advanced',label:'Advanced',lessons:[
+    {id:'p_em',title:'Electromagnetism',desc:'Maxwell\'s equations — the unified theory of electric and magnetic fields.',
+     concept:`<p><strong>Maxwell\'s equations</strong>:</p>
+<div class="formula">∇·E = ρ/ε₀    (Gauss)</div>
+<div class="formula">∇·B = 0       (no monopoles)</div>
+<div class="formula">∇×E = −∂B/∂t  (Faraday)</div>
+<div class="formula">∇×B = μ₀J + μ₀ε₀ ∂E/∂t</div>`,
+     viz:'em',vizSubtitle:'Propagating E and B fields perpendicular to each other',
+     exercises:[{q:'Why ∇·B = 0?',a:'No magnetic monopoles.'},{q:'Speed of light from Maxwell?',a:'c = 1/√(μ₀ε₀)'}]},
+    {id:'p_lagrangian',title:'Lagrangian mechanics',desc:'Reformulate mechanics using the principle of least action.',
+     concept:`<div class="formula">L = T − V</div>
+<div class="formula">d/dt (∂L/∂q̇) − ∂L/∂q = 0</div>`,
+     viz:'lagrangian',vizSubtitle:'Pendulum with energy bars — T and V oscillate, sum constant',
+     exercises:[{q:'Pendulum Lagrangian?',a:'L = ½ml²θ̇² + mgl·cos(θ)'},{q:'Advantage over Newton?',a:'Works in any coordinates.'}]},
+    {id:'p_quantum',title:'Quantum mechanics primer',desc:'Wavefunction, Schrödinger equation, and uncertainty principle.',
+     concept:`<div class="formula">iℏ ∂ψ/∂t = Ĥψ</div>
+<div class="formula">Δx·Δp ≥ ℏ/2</div>`,
+     viz:'quantum',vizSubtitle:'Particle-in-a-box wavefunctions and probability densities',
+     exercises:[{q:'Why can\'t we know x and p exactly?',a:'Uncertainty principle.'},{q:'What is |ψ(x)|²?',a:'Probability density.'}]},
+  ]},
+  {level:'expert',label:'Expert',lessons:[
+    {id:'p_hamiltonian',title:'Hamiltonian mechanics & phase space',desc:'Canonical mechanics and the geometry of phase space.',
+     concept:`<div class="formula">H(q, p, t) = T + V</div>
+<div class="formula">q̇ = ∂H/∂p,  ṗ = −∂H/∂q</div>`,
+     viz:'phase',vizSubtitle:'Orbital trajectory in (q, p) space',
+     exercises:[{q:'Derive EOM for H = p²/2m + ½mω²q².',a:'q̈ = −ω²q (SHM)'},{q:'Liouville implication?',a:'Phase-space density conserved.'}]},
+    {id:'p_relativity',title:'Special relativity',desc:'Einstein\'s reformulation of space, time, and energy.',
+     concept:`<div class="formula">γ = 1/√(1−v²/c²)</div>
+<div class="formula">E² = (pc)² + (mc²)²</div>`,
+     viz:'relativity',vizSubtitle:'Lorentz factor γ diverges as v → c',
+     exercises:[{q:'γ at v = 0.8c?',a:'γ ≈ 1.667'},{q:'Why s² invariant?',a:'Lorentz structure.'}]},
+  ]}
+]},
+optimization: {title:'Optimization Design', levels:[
+  {level:'beginner',label:'Beginner',lessons:[
+    {id:'o_intro',title:'What is optimization?',desc:'Anatomy of an optimization problem: objective, variables, constraints.',
+     concept:`<p>• <strong>Variables</strong> x — what you choose.<br>• <strong>Objective</strong> f(x) — what to minimize.<br>• <strong>Constraints</strong> g(x) ≤ 0, h(x) = 0.</p>
+<div class="formula">min f(x)  s.t.  g(x) ≤ 0</div>`,
+     viz:'feasible',vizSubtitle:'Feasible region, objective contours, and optimum vertex',
+     exercises:[{q:'Factory: A ($3, 1h), B ($5, 2h), 100h. LP?',a:'max 3a+5b s.t. a+2b≤100'},{q:'Max f(x) = min −f(x)?',a:'Yes.'}]},
+    {id:'o_unconstrained',title:'Unconstrained optimization',desc:'Extrema using calculus: first and second derivative tests.',
+     concept:`<div class="formula">∇f(x*) = 0,  ∇²f(x*) ≻ 0</div>
+<p>Critical points: min, max, or <strong>saddle</strong>.</p>`,
+     viz:'critical',vizSubtitle:'Contour topology for min, max, and saddle points',
+     exercises:[{q:'Min of x² − 4x + 7?',a:'x*=2, min value=3'},{q:'Critical of x² − y²?',a:'Saddle point'}]},
+    {id:'o_gradient',title:'Gradient descent',desc:'The workhorse of ML — iteratively move downhill on a loss surface.',
+     concept:`<div class="formula">θ ← θ − α ∇f(θ)</div>
+<p>α too small → slow. α too large → diverge.</p>`,
+     viz:'gradient',vizSubtitle:'GD path on a 1D loss curve — tune α to see behavior change',
+     exercises:[{q:'f(x)=x². x₀=3, α=0.1. After 1 step?',a:'x = 2.4'},{q:'Risk of small α?',a:'Slow; can stall.'}]},
+  ]},
+  {level:'intermediate',label:'Intermediate',lessons:[
+    {id:'o_linear',title:'Linear programming',desc:'Linear objective with linear constraints — the simplex method.',
+     concept:`<div class="formula">min cᵀx  s.t.  Ax ≤ b, x ≥ 0</div>
+<p>Optimum at a <strong>vertex</strong>. Simplex walks vertex → vertex.</p>`,
+     viz:'lp',vizSubtitle:'Polytope feasible region and objective direction finding the vertex',
+     exercises:[{q:'Why vertex?',a:'Linear extremum at vertex.'},{q:'Shadow price?',a:'Sensitivity of optimum to RHS.'}]},
+    {id:'o_newton',title:'Newton\'s method',desc:'Second-order optimization — use curvature to converge faster.',
+     concept:`<div class="formula">θ ← θ − [∇²f]⁻¹ ∇f</div>
+<p>Quadratic convergence. BFGS/L-BFGS approximate the Hessian.</p>`,
+     viz:'newton',vizSubtitle:'Newton converges in 1 step for quadratics; GD takes many',
+     exercises:[{q:'Newton on x² from x=3?',a:'Step to 0 in one iter.'},{q:'When Newton fails?',a:'Singular Hessian.'}]},
+    {id:'o_constraints',title:'Constrained optimization — Lagrange',desc:'Handle equality constraints with Lagrange multipliers.',
+     concept:`<div class="formula">L(x, λ) = f(x) + λ h(x)</div>
+<p>At optimum, ∇f ∥ ∇h.</p>`,
+     viz:'lagrange',vizSubtitle:'Level sets of f tangent to constraint line at optimum',
+     exercises:[{q:'min x²+y² s.t. x+y=1?',a:'(0.5, 0.5), value 0.5'},{q:'Complementary slackness?',a:'λᵢ=0 or gᵢ=0'}]},
+  ]},
+  {level:'advanced',label:'Advanced',lessons:[
+    {id:'o_convex',title:'Convex optimization',desc:'Local optima are global — the mathematical sweet spot.',
+     concept:`<div class="formula">f(λx+(1−λ)y) ≤ λf(x)+(1−λ)f(y)</div>
+<p>Any local min = global min.</p>`,
+     viz:'convex',vizSubtitle:'Chord above curve (convex) vs can dip below (non-convex)',
+     exercises:[{q:'Is x⁴ convex?',a:'Yes.'},{q:'KKT stationarity?',a:'∇f₀ + Σλᵢ∇fᵢ = 0'}]},
+    {id:'o_integer',title:'Integer programming',desc:'Variables constrained to integers — branch-and-bound solvers.',
+     concept:`<div class="formula">min cᵀx s.t. Ax ≤ b, x ∈ ℤⁿ</div>
+<p>NP-hard. LP relaxation + branching.</p>`,
+     viz:'integer',vizSubtitle:'Branch-and-bound tree exploring integer splits',
+     exercises:[{q:'Why LP relaxation is a bound?',a:'Larger feasible region.'},{q:'Branching on xⱼ=2.4?',a:'xⱼ ≤ 2 and xⱼ ≥ 3'}]},
+    {id:'o_stochastic',title:'Stochastic optimization',desc:'SGD, stochastic programming, sample-average approximation.',
+     concept:`<div class="formula">θ ← θ − α ∇f̂(θ)</div>`,
+     viz:'sgd',vizSubtitle:'SGD noisy descent on a quadratic bowl',
+     exercises:[{q:'Why SGD works?',a:'Expected gradient = true gradient.'},{q:'When full-batch?',a:'Small data, low noise.'}]},
+  ]},
+  {level:'expert',label:'Expert',lessons:[
+    {id:'o_duality',title:'Duality & KKT conditions',desc:'Primal-dual theory, strong duality, and optimality certificates.',
+     concept:`<div class="formula">L(x,λ,ν) = f₀(x) + Σλᵢfᵢ(x) + νᵀ(Ax−b)</div>`,
+     viz:'duality',vizSubtitle:'Primal curve vs Lagrangian — dual gives a lower bound',
+     exercises:[{q:'Slater\'s condition?',a:'Strictly feasible interior point.'},{q:'Dual of min ½‖x‖²?',a:'x* = Aᵀ(AAᵀ)⁻¹b'}]},
+    {id:'o_metaheuristics',title:'Metaheuristics & global search',desc:'Simulated annealing, genetic algorithms, Bayesian optimization.',
+     concept:`<p>• <strong>SA</strong>: accept worse with prob exp(−Δf/T).<br>• <strong>GA</strong>: evolve population.<br>• <strong>BO</strong>: Gaussian process.</p>`,
+     viz:'annealing',vizSubtitle:'Simulated annealing exploring a multi-modal landscape',
+     exercises:[{q:'Why SA accepts worse moves?',a:'Escape local minima.'},{q:'When BO best?',a:'Expensive evaluations.'}]},
+    {id:'o_design',title:'Engineering design optimization',desc:'Multi-objective, topology, and robust design for real systems.',
+     concept:`<div class="formula">min [f₁(x), f₂(x), …]</div>
+<p>Pareto front. Topology (SIMP). Robust worst-case.</p>`,
+     viz:'pareto',vizSubtitle:'Pareto front — no solution dominates another',
+     exercises:[{q:'Why can\'t all objectives be minimized?',a:'Trade-off.'},{q:'Robust vs stochastic?',a:'Worst-case vs expected value.'}]},
+  ]}
+]}
+};
+
+let currentSubject='physics', currentLesson=null, currentTab='concept', completed={}, animFrames={}, vizState={};
+function getAllLessons(s){return CURRICULUM[s].levels.flatMap(l=>l.lessons.map(x=>({...x,level:l.level,levelLabel:l.label})));}
+function findLesson(id){for(const l of getAllLessons(currentSubject)) if(l.id===id) return l; return null;}
+function switchSubject(subj){if(subj===currentSubject) return;currentSubject=subj;document.querySelectorAll('.subject-pill').forEach(p=>p.classList.toggle('active',p.dataset.subj===subj));const first=CURRICULUM[subj].levels[0].lessons[0];currentLesson={...first,level:CURRICULUM[subj].levels[0].level,levelLabel:CURRICULUM[subj].levels[0].label};currentTab='concept';buildSidebar();renderLesson();updateProgress();}
+function buildSidebar(){const s=document.getElementById('sidebar-scroll');s.innerHTML='';CURRICULUM[currentSubject].levels.forEach((lv,ci)=>{const sec=document.createElement('div');sec.className='level-section lv-'+lv.level+(ci===0?' open':'');sec.innerHTML='<div class="level-header" onclick="toggleLevel(this.parentElement)"><span class="level-badge">'+lv.label+'</span><span class="level-count">'+lv.lessons.length+' lessons</span><span class="chevron">\u25B6</span></div><div class="lesson-list">'+lv.lessons.map(l=>'<div class="lesson-item'+(currentLesson&&l.id===currentLesson.id?' active':'')+(completed[l.id]?' done':'')+'" data-id="'+l.id+'" onclick="selectLesson(\''+l.id+'\')"><span class="check">\u2713</span>'+l.title+'</div>').join('')+'</div>';s.appendChild(sec);});}
+function toggleLevel(sec){sec.classList.toggle('open');}
+function selectLesson(id){currentLesson=findLesson(id);currentTab='concept';document.querySelectorAll('.lesson-item').forEach(el=>el.classList.toggle('active',el.dataset.id===id));renderLesson();}
+function updateProgress(){const a=getAllLessons(currentSubject);const d=a.filter(l=>completed[l.id]).length;const p=a.length?Math.round(d/a.length*100):0;document.getElementById('progress-text').textContent=d+' / '+a.length;document.getElementById('progress-fill').style.width=p+'%';}
+function toggleDone(){completed[currentLesson.id]=!completed[currentLesson.id];const b=document.getElementById('mark-btn');b.classList.toggle('done',completed[currentLesson.id]);b.textContent=completed[currentLesson.id]?'\u2713 Completed':'Mark complete';const i=document.querySelector('.lesson-item[data-id="'+currentLesson.id+'"]');if(i) i.classList.toggle('done',completed[currentLesson.id]);updateProgress();}
+
+function renderLesson(){
+  const tag=document.getElementById('lesson-tag');tag.textContent=currentLesson.levelLabel;tag.className='tag-'+currentLesson.level;
+  document.getElementById('lesson-title').textContent=currentLesson.title;
+  document.getElementById('lesson-desc').textContent=currentLesson.desc;
+  const btn=document.getElementById('mark-btn');btn.classList.toggle('done',!!completed[currentLesson.id]);btn.textContent=completed[currentLesson.id]?'\u2713 Completed':'Mark complete';
+  document.getElementById('tab-concept').innerHTML='<div class="section-card"><div class="concept-body">'+currentLesson.concept+'</div></div>';
+  buildViz(currentLesson.viz);
+  document.getElementById('tab-exercises').innerHTML=currentLesson.exercises.map((ex,i)=>'<div class="section-card"><h3>Exercise '+(i+1)+'</h3><div class="concept-body" style="margin-bottom:10px">'+ex.q+'</div><button class="ex-reveal" onclick="this.nextElementSibling.style.display=\'block\';this.style.display=\'none\'">Reveal answer</button><div style="display:none;margin-top:8px" class="formula">'+ex.a+'</div></div>').join('');
+  document.getElementById('quick-chips').innerHTML=['Give a real-world example','Explain more simply','Show the derivation','Common pitfalls?'].map(c=>'<span class="chip" onclick="quickAsk(\''+c+'\')">'+c+'</span>').join('');
+  document.getElementById('ai-messages').innerHTML='';
+  showTab(currentTab);
+}
+function switchTab(t){currentTab=t;showTab(t);}
+function showTab(t){['concept','visualization','exercises'].forEach(x=>{document.getElementById('tab-'+x).style.display=x===t?'block':'none';});document.querySelectorAll('.tab').forEach((el,i)=>el.classList.toggle('active',['concept','visualization','exercises'][i]===t));cancelAnimationFrame(animFrames.id);if(t==='visualization') startViz(currentLesson.viz);}
+
+const VIZ_DEFS = {
+  forces:{params:[{id:'vMass',name:'Mass  m',desc:'How heavy the block is. Bigger mass resists acceleration more.',min:1,max:10,val:5,step:1,unit:' kg'},{id:'vForce',name:'Force  F',desc:'The push applied to the block. More force \u2192 more acceleration.',min:5,max:100,val:20,step:5,unit:' N'}],legend:[['#378ADD','Block'],['#D85A30','Applied force F'],['#1D9E75','Resulting acceleration a']]},
+  projectile:{params:[{id:'vV0',name:'Launch speed  v\u2080',desc:'How fast the projectile leaves the ground.',min:5,max:40,val:20,step:1,unit:' m/s'},{id:'vAngle',name:'Launch angle  \u03B8',desc:'Angle above horizontal. 45\u00B0 gives maximum range in vacuum.',min:10,max:80,val:45,step:5,unit:'\u00B0'}],legend:[['#378ADD','Trajectory (parabola)'],['#D85A30','Launch velocity vector'],['#EF9F27','Apex (highest point)']]},
+  energy:{params:[{id:'vH',name:'Height  h',desc:'Initial height above the ground. Higher = more potential energy.',min:1,max:20,val:10,step:1,unit:' m'},{id:'vM',name:'Mass  m',desc:'Mass of the falling object. Affects both PE (= mgh) and KE (= \u00BDmv\u00B2).',min:1,max:10,val:2,step:1,unit:' kg'}],legend:[['#D85A30','Potential energy PE'],['#378ADD','Kinetic energy KE'],['#1D9E75','Total energy (conserved)']]},
+  oscillations:{params:[{id:'vK',name:'Spring constant  k',desc:'Spring stiffness. Higher k \u2192 stronger restoring force \u2192 faster oscillation.',min:10,max:200,val:80,step:10,unit:' N/m'},{id:'vMass2',name:'Mass  m',desc:'Mass attached to the spring. Heavier mass \u2192 slower oscillation.',min:0.1,max:2,val:0.5,step:0.1,unit:' kg'}],legend:[['#378ADD','Mass'],['#EF9F27','Position x(t) over time'],['#73726c','Equilibrium position']]},
+  momentum:{params:[{id:'vM1',name:'Mass 1  m\u2081',desc:'The moving object (blue) that strikes the stationary one.',min:1,max:6,val:3,step:1,unit:' kg'},{id:'vM2',name:'Mass 2  m\u2082',desc:'The stationary target object (gray) before collision.',min:1,max:6,val:2,step:1,unit:' kg'}],legend:[['#378ADD','Mass 1 (moving, v=4 m/s)'],['#73726c','Mass 2 (at rest)'],['#1D9E75','Combined mass after collision']]},
+  thermo:{params:[{id:'vTh',name:'Hot reservoir  T\u2095',desc:'Temperature of the heat source feeding the engine. Higher = more available work.',min:300,max:900,val:500,step:20,unit:' K'},{id:'vTc',name:'Cold reservoir  Tc',desc:'Temperature of the heat sink. Lower = higher efficiency (\u03B7 = 1 \u2212 Tc/T\u2095).',min:200,max:400,val:300,step:10,unit:' K'}],legend:[['#D85A30','Hot reservoir Qh'],['#EF9F27','Engine / useful work W'],['#378ADD','Cold reservoir Qc']]},
+  em:{params:[{id:'vLambda',name:'Wavelength  \u03BB',desc:'Distance between wave peaks. Short \u03BB = high frequency; long \u03BB = low frequency.',min:40,max:200,val:100,step:10,unit:' units'}],legend:[['#D85A30','Electric field E (vertical)'],['#378ADD','Magnetic field B (perpendicular to E)']]},
+  lagrangian:{params:[{id:'vLen',name:'Length  \u2113',desc:'Length of the pendulum rod. Longer pendulum = slower swing.',min:0.5,max:3,val:1.5,step:0.1,unit:' m'},{id:'vAng',name:'Initial angle  \u03B8\u2080',desc:'How far the pendulum is pulled back from vertical before release.',min:5,max:60,val:30,step:5,unit:'\u00B0',onchange:'restartPend()'}],legend:[['#378ADD','Pendulum bob'],['#1D9E75','Kinetic energy (T)'],['#D85A30','Potential energy (V)']]},
+  quantum:{params:[{id:'vN',name:'Quantum number  n',desc:'Energy level index. Higher n = more nodes and higher energy (E\u2099 \u221D n\u00B2).',min:1,max:5,val:2,step:1,unit:'',prefix:'n = '}],legend:[['#7F77DD','Wavefunction \u03C8(x)'],['#EF9F27','Probability density |\u03C8(x)|\u00B2']]},
+  phase:{params:[{id:'vOmega',name:'Angular frequency  \u03C9',desc:'Oscillation rate. Sets the shape of phase-space orbits.',min:1,max:8,val:3,step:1,unit:' rad/s'},{id:'vEnergy',name:'Energy levels',desc:'How many constant-energy ellipses to display simultaneously.',min:1,max:5,val:3,step:1,unit:''}],legend:[['#7F77DD','Constant-energy orbits'],['#EF9F27','Current state trajectory']]},
+  relativity:{params:[{id:'vBeta',name:'Speed ratio  \u03B2 = v / c',desc:'Object\'s speed as a fraction of c. As \u03B2 \u2192 1, \u03B3 diverges.',min:0,max:99,val:50,step:1,unit:'',transform:v=>(v/100).toFixed(2)}],legend:[['#7F77DD','Lorentz factor \u03B3(v) curve'],['#D85A30','Current \u03B2 and \u03B3 value']]},
+  feasible:{params:[{id:'vSlope',name:'Constraint bound  b',desc:'Right-hand side of x\u2081 + x\u2082 \u2264 b. Bigger b = larger feasible region.',min:5,max:30,val:20,step:1,unit:'',transform:v=>(v/10).toFixed(1)}],legend:[['#1D9E75','Feasible region'],['#378ADD','Objective level curves'],['#D85A30','Optimum (at vertex)']]},
+  critical:{params:[{id:'vType',name:'Point type',desc:'Choose minimum, maximum, or saddle to see how the contour pattern changes.',options:['min::Minimum','max::Maximum','saddle::Saddle']}],legend:[['#378ADD','Lower objective values'],['#D85A30','Higher objective values'],['#EF9F27','Critical point (\u2207f = 0)']]},
+  gradient:{params:[{id:'vLR',name:'Learning rate  \u03B1',desc:'Step size per iteration. Too small \u2192 slow; too large \u2192 overshoot.',min:1,max:50,val:15,step:1,unit:'',transform:v=>(v/100).toFixed(2)}],buttons:[{label:'Reset path',onclick:'resetGD()'}],legend:[['#378ADD','Objective f(x)'],['#D85A30','Descent iterations'],['#1D9E75','Final point']]},
+  lp:{params:[{id:'vObjDir',name:'Objective direction',desc:'Angle of the objective vector c. Rotating it picks a different optimal vertex.',min:0,max:90,val:30,step:5,unit:'\u00B0'}],legend:[['#378ADD','Feasible polytope'],['#D85A30','Optimal vertex'],['#1D9E75','Objective direction']]},
+  newton:{params:[{id:'vMethod',name:'Method',desc:'Gradient descent uses only slope; Newton uses slope and curvature.',options:['gd::Gradient descent','newton::Newton\'s method'],onchange:'resetOpt()'},{id:'vLR2',name:'Learning rate  \u03B1',desc:'Step size for gradient descent; Newton uses exact step.',min:1,max:50,val:20,step:1,unit:'',transform:v=>(v/100).toFixed(2),onchange:'resetOpt()'}],legend:[['#378ADD','Objective f(x) = x\u00B2'],['#D85A30','Iteration path']]},
+  lagrange:{params:[{id:'vC',name:'Constraint  x + y = c',desc:'Right-hand side c of the equality constraint \u2014 shifts the line.',min:5,max:30,val:15,step:1,unit:'',transform:v=>(v/10).toFixed(1)}],legend:[['#378ADD','Level sets of f = x\u00B2 + y\u00B2'],['#D85A30','Constraint line x+y = c'],['#EF9F27','Optimum (tangent point)']]},
+  convex:{params:[{id:'vCvxType',name:'Function type',desc:'Convex has chord ABOVE curve (local = global). Non-convex breaks this.',options:['cvx::Convex','ncvx::Non-convex']}],legend:[['#1D9E75','Convex f'],['#D85A30','Non-convex f'],['#EF9F27','Chord between two points']]},
+  integer:{params:[{id:'vDepth',name:'Tree depth',desc:'How many branching levels to explore.',min:1,max:4,val:3,step:1,unit:''}],legend:[['#378ADD','Active node'],['#73726c','Pruned'],['#1D9E75','Leaf (integer solution)']]},
+  sgd:{params:[{id:'vNoise',name:'Gradient noise  \u03C3',desc:'Standard deviation of noise. High \u03C3 = jitterier path.',min:0,max:30,val:10,step:1,unit:'',transform:v=>(v/100).toFixed(2)}],buttons:[{label:'Reset path',onclick:'resetGD()'}],legend:[['#378ADD','Loss contours'],['#D85A30','Stochastic path'],['#1D9E75','Current iteration']]},
+  duality:{params:[{id:'vLambda2',name:'Dual variable  \u03BB',desc:'Multiplier on the constraint inside the Lagrangian.',min:0,max:50,val:10,step:1,unit:'',transform:v=>(v/10).toFixed(1)}],legend:[['#378ADD','Primal f(x)'],['#D85A30','Lagrangian L(x, \u03BB)'],['#EF9F27','Dual value g(\u03BB)']]},
+  annealing:{params:[{id:'vTemp',name:'Temperature  T',desc:'Controls acceptance of bad moves via P = exp(\u2212\u0394f/T).',min:1,max:100,val:50,step:1,unit:'',transform:v=>(v/100).toFixed(2)}],buttons:[{label:'Reset path',onclick:'resetGD()'}],legend:[['#378ADD','Multi-modal objective'],['#D85A30','Exploration trajectory'],['#EF9F27','Current state']]},
+  pareto:{params:[{id:'vTrade',name:'Trade-off preference',desc:'Slide from cost-priority (left) to weight-priority (right).',min:0,max:100,val:50,step:5,unit:'',transform:v=>(v/100).toFixed(2)}],legend:[['#73726c','Dominated designs'],['#1D9E75','Pareto front (optimal)'],['#D85A30','Chosen design']]},
+};
+
+function buildViz(type){
+  const l = currentLesson;
+  const d = VIZ_DEFS[type] || VIZ_DEFS.forces;
+  const paramRows = (d.params||[]).map(p=>{
+    if(p.options){
+      const opts = p.options.map(o=>{const [v,lab]=o.split('::');return '<option value="'+v+'">'+lab+'</option>';}).join('');
+      return '<div class="param-row"><div class="param-label-group"><div class="param-name">'+p.name+'</div><div class="param-desc">'+p.desc+'</div></div><div class="param-control"><select id="'+p.id+'" onchange="'+(p.onchange||'updateViz()')+'">'+opts+'</select></div><div></div></div>';
+    }
+    const displayInit = p.prefix ? p.prefix+p.val : (p.transform?p.transform(p.val):p.val)+(p.unit||'');
+    return '<div class="param-row"><div class="param-label-group"><div class="param-name">'+p.name+'</div><div class="param-desc">'+p.desc+'</div></div><div class="param-control"><input type="range" id="'+p.id+'" min="'+p.min+'" max="'+p.max+'" value="'+p.val+'" step="'+p.step+'" oninput="updateViz()" '+(p.onchange?'onchange="'+p.onchange+'"':'')+'><div style="width:60px;font-size:11px;color:var(--color-text-tertiary);text-align:center">'+(p.transform?p.transform(p.min):p.min)+'\u2014'+(p.transform?p.transform(p.max):p.max)+'</div></div><div class="param-value" id="'+p.id+'V">'+displayInit+'</div></div>';
+  }).join('');
+  const buttons = (d.buttons||[]).map(b=>'<button class="viz-btn" onclick="'+b.onclick+'">'+b.label+'</button>').join('');
+  const legendHtml = d.legend ? '<div class="viz-legend">'+d.legend.map(pair=>'<span class="leg-item"><span class="leg-swatch" style="background:'+pair[0]+'"></span>'+pair[1]+'</span>').join('')+'</div>' : '';
+  document.getElementById('tab-visualization').innerHTML =
+    '<div id="viz-container"><div id="viz-title"><span>'+l.title+'</span><span id="viz-subtitle">'+(l.vizSubtitle||'')+'</span></div><div id="viz-canvas-wrap"><canvas id="vizCanvas" width="820" height="380" role="img" aria-label="'+l.title+' visualization"></canvas></div><div class="param-panel">'+paramRows+(buttons?'<div style="display:flex;gap:8px;justify-content:flex-end">'+buttons+'</div>':'')+'</div>'+legendHtml+'</div>';
+  const cv = document.getElementById('vizCanvas');
+  const dpr = window.devicePixelRatio||1;
+  cv.width = 820*dpr; cv.height = 380*dpr;
+  cv.style.width = '820px'; cv.style.height = '380px';
+  cv.getContext('2d').scale(dpr,dpr);
+}
+
+function startViz(type){cancelAnimationFrame(animFrames.id);vizState = {type, t:0, gdPath:[], gdX:2.8, phaseTrail:[], pendTrail:[], optPath:[]};if(['oscillations','lagrangian','phase','em','sgd','annealing'].includes(type)) animate();else drawStatic();}
+function animate(){const loop=()=>{vizState.t+=0.025;drawStatic();animFrames.id=requestAnimationFrame(loop);};animFrames.id=requestAnimationFrame(loop);}
+
+function updateViz(){
+  const d = VIZ_DEFS[vizState.type]; if(!d) return;
+  (d.params||[]).forEach(p=>{
+    if(p.options) return;
+    const el = document.getElementById(p.id);
+    const disp = document.getElementById(p.id+'V');
+    if(!el||!disp) return;
+    if(p.prefix) disp.textContent = p.prefix+el.value;
+    else disp.textContent = (p.transform?p.transform(el.value):el.value)+(p.unit||'');
+  });
+  drawStatic();
+}
+
+function getColors(){
+  const dark=matchMedia('(prefers-color-scheme: dark)').matches;
+  return {bg:dark?'#1a1a18':'#ffffff',panel:dark?'#262623':'#ffffff',text:dark?'#e0ddd1':'#2c2c2a',muted:dark?'#9c9a92':'#5f5e5a',line:dark?'#3a3a37':'#D3D1C7',grid:dark?'#2a2a27':'#EEEEEA',blue:'#378ADD',amber:'#EF9F27',teal:'#1D9E75',coral:'#D85A30',purple:'#7F77DD',green:'#639922',red:'#E24B4A',pink:'#D4537E'};
+}
+
+function drawStatic(){
+  const cv=document.getElementById('vizCanvas'); if(!cv) return;
+  const ctx=cv.getContext('2d'), W=820, H=380, c=getColors();
+  ctx.clearRect(0,0,W,H);
+  const fn={forces:drawForces,projectile:drawProjectile,energy:drawEnergy,oscillations:drawOsc,momentum:drawMomentum,thermo:drawThermo,em:drawEM,lagrangian:drawPend,quantum:drawQuantum,phase:drawPhase,relativity:drawRelativity,feasible:drawFeasible,critical:drawCritical,gradient:drawGradient,lp:drawLP,newton:drawNewton,lagrange:drawLagrange,convex:drawConvex,integer:drawInteger,sgd:drawSGD,duality:drawDuality,annealing:drawAnnealing,pareto:drawPareto}[vizState.type];
+  if(fn) fn(ctx,W,H,c);
+}
+
+function arrow(ctx,x1,y1,x2,y2,col,w){w=w||2.5;ctx.strokeStyle=col;ctx.lineWidth=w;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();const a=Math.atan2(y2-y1,x2-x1),L=12,A=0.4;ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(x2,y2);ctx.lineTo(x2-L*Math.cos(a-A),y2-L*Math.sin(a-A));ctx.lineTo(x2-L*Math.cos(a+A),y2-L*Math.sin(a+A));ctx.closePath();ctx.fill();}
+function rr(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.arcTo(x+w,y,x+w,y+r,r);ctx.lineTo(x+w,y+h-r);ctx.arcTo(x+w,y+h,x+w-r,y+h,r);ctx.lineTo(x+r,y+h);ctx.arcTo(x,y+h,x,y+h-r,r);ctx.lineTo(x,y+r);ctx.arcTo(x,y,x+r,y,r);ctx.closePath();}
+function grid(ctx,W,H,c,pad,xDiv,yDiv){ctx.strokeStyle=c.grid;ctx.lineWidth=0.5;for(let i=1;i<xDiv;i++){const x=pad+(W-pad*2)*i/xDiv;ctx.beginPath();ctx.moveTo(x,pad);ctx.lineTo(x,H-pad);ctx.stroke();}for(let i=1;i<yDiv;i++){const y=pad+(H-pad*2)*i/yDiv;ctx.beginPath();ctx.moveTo(pad,y);ctx.lineTo(W-pad,y);ctx.stroke();}ctx.strokeStyle=c.line;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(pad,H-pad);ctx.lineTo(W-pad,H-pad);ctx.stroke();ctx.beginPath();ctx.moveTo(pad,pad);ctx.lineTo(pad,H-pad);ctx.stroke();}
+function drawText(ctx,txt,x,y,opts){opts=opts||{};ctx.font=(opts.italic?'italic ':'')+(opts.weight||400)+' '+(opts.size||14)+'px '+FONT;ctx.textAlign=opts.align||'left';ctx.textBaseline=opts.baseline||'alphabetic';ctx.fillStyle=opts.color||'#2c2c2a';ctx.fillText(txt,x,y);}
+
+function drawForces(ctx,W,H,c){
+  const m=+document.getElementById('vMass').value, F=+document.getElementById('vForce').value, a=(F/m).toFixed(2);
+  ctx.fillStyle=c.grid;ctx.fillRect(0,H-50,W,50);
+  ctx.strokeStyle=c.line;ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(0,H-50);ctx.lineTo(W,H-50);ctx.stroke();
+  const bW=100+m*10, bH=60, bX=W/2-bW/2, bY=H-50-bH;
+  ctx.fillStyle=c.blue+'55';ctx.strokeStyle=c.blue;ctx.lineWidth=2;rr(ctx,bX,bY,bW,bH,10);ctx.fill();ctx.stroke();
+  drawText(ctx,m+' kg',W/2,bY+bH/2+6,{size:18,weight:500,align:'center',color:c.blue});
+  const aL=Math.min(F*3,220);
+  arrow(ctx,bX-20,H-80,bX-20-aL,H-80,c.coral,3);
+  drawText(ctx,'F = '+F+' N',bX-20-aL/2,H-90,{size:16,weight:500,align:'center',color:c.coral,italic:true});
+  const aArrLen=Math.min(a*25,180);
+  arrow(ctx,bX+bW+20,H-80,bX+bW+20+aArrLen,H-80,c.teal,2.5);
+  drawText(ctx,'a = '+a+' m/s\u00B2',bX+bW+20+aArrLen/2,H-90,{size:16,weight:500,align:'center',color:c.teal,italic:true});
+  drawText(ctx,"Newton's second law:  F = m \u00D7 a",W/2,40,{size:18,weight:500,align:'center',color:c.text,italic:true});
+  drawText(ctx,F+' N  =  '+m+' kg  \u00D7  '+a+' m/s\u00B2',W/2,68,{size:16,align:'center',color:c.muted});
+}
+
+function drawProjectile(ctx,W,H,c){
+  const v0=+document.getElementById('vV0').value, ang=(+document.getElementById('vAngle').value)*Math.PI/180;
+  const g=9.8, T=2*v0*Math.sin(ang)/g, R=v0*v0*Math.sin(2*ang)/g, Hmax=v0*v0*Math.sin(ang)*Math.sin(ang)/(2*g);
+  const pad=60, gW=W-pad*2, gH=H-pad*2;
+  const maxRange = 40*40/g, maxH = 40*40/(2*g);
+  const sx=x=>pad+x/maxRange*gW, sy=y=>H-pad-y/maxH*gH;
+  ctx.strokeStyle=c.grid;ctx.lineWidth=0.5;
+  for(let i=1;i<10;i++){const x=pad+gW*i/10;ctx.beginPath();ctx.moveTo(x,pad);ctx.lineTo(x,H-pad);ctx.stroke();}
+  for(let i=1;i<6;i++){const y=pad+gH*i/6;ctx.beginPath();ctx.moveTo(pad,y);ctx.lineTo(W-pad,y);ctx.stroke();}
+  ctx.strokeStyle=c.line;ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(pad,H-pad);ctx.lineTo(W-pad,H-pad);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(pad,pad);ctx.lineTo(pad,H-pad);ctx.stroke();
+  for(let i=0;i<=5;i++){const r=i*30;drawText(ctx,r+'m',sx(r),H-pad+18,{size:13,align:'center',color:c.muted});}
+  for(let i=0;i<=3;i++){const h=i*15;drawText(ctx,h+'m',pad-8,sy(h)+4,{size:13,align:'right',color:c.muted});}
+  ctx.strokeStyle=c.blue;ctx.lineWidth=3;ctx.lineCap='round';ctx.beginPath();
+  for(let t=0;t<=T;t+=T/100){const x=v0*Math.cos(ang)*t, y=v0*Math.sin(ang)*t-0.5*g*t*t; if(y<0) break; const px=sx(x),py=sy(y); t===0?ctx.moveTo(px,py):ctx.lineTo(px,py);}
+  ctx.stroke();
+  const apexX=R/2, apexY=Hmax;
+  ctx.strokeStyle=c.amber;ctx.setLineDash([3,4]);ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(sx(apexX),H-pad);ctx.lineTo(sx(apexX),sy(apexY));ctx.stroke();ctx.setLineDash([]);
+  ctx.beginPath();ctx.arc(sx(apexX),sy(apexY),5,0,Math.PI*2);ctx.fillStyle=c.amber;ctx.fill();
+  drawText(ctx,'apex',sx(apexX)+8,sy(apexY)-6,{size:14,color:c.amber,weight:500,italic:true});
+  arrow(ctx,sx(0),sy(0),sx(0)+40*Math.cos(ang),sy(0)-40*Math.sin(ang),c.coral,3);
+  drawText(ctx,'v\u2080 = '+v0,sx(0)+50*Math.cos(ang)-10,sy(0)-50*Math.sin(ang)+4,{size:15,color:c.coral,weight:500,italic:true});
+  drawText(ctx,'Range: '+R.toFixed(1)+' m',pad+10,pad+20,{size:16,weight:500,color:c.text});
+  drawText(ctx,'Max height: '+Hmax.toFixed(1)+' m',pad+10,pad+44,{size:16,weight:500,color:c.text});
+  drawText(ctx,'Flight time: '+T.toFixed(2)+' s',pad+10,pad+68,{size:16,weight:500,color:c.text});
+}
+
+function drawEnergy(ctx,W,H,c){
+  const h=+document.getElementById('vH').value, m=+document.getElementById('vM').value, g=9.8;
+  const pe=m*g*h, v=Math.sqrt(2*g*h), ke=0.5*m*v*v, total=pe+ke;
+  const yTop=60,yBot=H-60;
+  const ballY=yTop+(yBot-yTop)*(1-h/20);
+  ctx.fillStyle=c.grid;ctx.fillRect(100,yBot,150,20);
+  ctx.strokeStyle=c.line;ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(100,yBot);ctx.lineTo(250,yBot);ctx.stroke();
+  ctx.strokeStyle=c.muted;ctx.setLineDash([5,4]);ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(200,ballY+18);ctx.lineTo(200,yBot);ctx.stroke();ctx.setLineDash([]);
+  drawText(ctx,'h = '+h+' m',215,(ballY+yBot)/2+5,{size:15,color:c.muted,weight:500,italic:true});
+  ctx.beginPath();ctx.arc(175,ballY+10,20,0,Math.PI*2);
+  ctx.fillStyle=c.amber+'cc';ctx.fill();ctx.strokeStyle=c.amber;ctx.lineWidth=2;ctx.stroke();
+  drawText(ctx,m+' kg',175,ballY+15,{size:15,weight:500,align:'center',color:'#633806'});
+  drawText(ctx,'Release',175,yTop-10,{size:14,align:'center',color:c.muted,italic:true});
+  const barW=80, gapX=30, chartX=350, chartTopY=yTop, chartBotY=yBot, chartH=chartBotY-chartTopY;
+  const maxE = 2*g*20*10;
+  drawText(ctx,'Energy',chartX+barW,chartTopY-15,{size:16,weight:500,align:'center',color:c.text});
+  const peH=Math.min(chartH, pe/maxE*chartH), keH=Math.min(chartH,ke/maxE*chartH);
+  ctx.fillStyle=c.coral+'88';ctx.fillRect(chartX,chartBotY-peH,barW,peH);ctx.strokeStyle=c.coral;ctx.lineWidth=2;ctx.strokeRect(chartX,chartBotY-peH,barW,peH);
+  drawText(ctx,'PE',chartX+barW/2,chartBotY+20,{size:15,weight:500,align:'center',color:c.coral,italic:true});
+  drawText(ctx,pe.toFixed(1)+' J',chartX+barW/2,chartBotY-peH-6,{size:14,weight:500,align:'center',color:'#712B13'});
+  const keX=chartX+barW+gapX;
+  ctx.fillStyle=c.blue+'88';ctx.fillRect(keX,chartBotY-keH,barW,keH);ctx.strokeStyle=c.blue;ctx.lineWidth=2;ctx.strokeRect(keX,chartBotY-keH,barW,keH);
+  drawText(ctx,'KE',keX+barW/2,chartBotY+20,{size:15,weight:500,align:'center',color:c.blue,italic:true});
+  drawText(ctx,ke.toFixed(1)+' J',keX+barW/2,chartBotY-keH-6,{size:14,weight:500,align:'center',color:'#0C447C'});
+  const totX=keX+barW+gapX;
+  const totH=Math.min(chartH,total/maxE*chartH);
+  ctx.fillStyle=c.teal+'44';ctx.fillRect(totX,chartBotY-totH,barW,totH);ctx.strokeStyle=c.teal;ctx.lineWidth=2;ctx.strokeRect(totX,chartBotY-totH,barW,totH);
+  drawText(ctx,'Total',totX+barW/2,chartBotY+20,{size:15,weight:500,align:'center',color:c.teal,italic:true});
+  drawText(ctx,total.toFixed(1)+' J',totX+barW/2,chartBotY-totH-6,{size:14,weight:500,align:'center',color:'#085041'});
+  drawText(ctx,'PE at top = KE at bottom \u2014 energy is conserved',W/2,40,{size:18,weight:500,align:'center',color:c.text,italic:true});
+}
+
+function drawOsc(ctx,W,H,c){
+  const k=+document.getElementById('vK').value, m=+document.getElementById('vMass2').value;
+  const w=Math.sqrt(k/m), T=2*Math.PI/w;
+  const A=90, cy=H*0.38;
+  const phi=w*vizState.t*0.3, x=A*Math.cos(phi);
+  const wallX=100, mX=wallX+220+x;
+  ctx.fillStyle=c.grid;ctx.fillRect(80,cy-50,20,100);
+  ctx.fillStyle=c.line;ctx.fillRect(80,cy-50,4,100);
+  ctx.strokeStyle=c.muted;ctx.lineWidth=2;ctx.lineCap='round';
+  const coils=16, sLen=mX-25-wallX, seg=sLen/coils, amp=10;
+  ctx.beginPath();ctx.moveTo(wallX,cy);
+  for(let i=0;i<coils;i++){const sx=wallX+i*seg;ctx.lineTo(sx+seg*0.25,cy-amp);ctx.lineTo(sx+seg*0.75,cy+amp);}
+  ctx.lineTo(mX-25,cy);ctx.stroke();
+  ctx.fillStyle=c.blue+'cc';ctx.strokeStyle=c.blue;ctx.lineWidth=2;
+  rr(ctx,mX-25,cy-28,50,56,8);ctx.fill();ctx.stroke();
+  drawText(ctx,m+' kg',mX,cy+5,{size:15,weight:500,align:'center',color:'#0C447C'});
+  ctx.strokeStyle=c.muted;ctx.setLineDash([3,4]);
+  ctx.beginPath();ctx.moveTo(wallX+220,cy-50);ctx.lineTo(wallX+220,cy+50);ctx.stroke();ctx.setLineDash([]);
+  drawText(ctx,'equilibrium',wallX+220,cy+70,{size:14,align:'center',color:c.muted,italic:true});
+  const chartX=100, chartY=H-130, chartW=W-200, chartH=80;
+  ctx.strokeStyle=c.line;ctx.lineWidth=1;
+  ctx.strokeRect(chartX,chartY,chartW,chartH);
+  ctx.strokeStyle=c.grid;ctx.lineWidth=0.5;
+  ctx.beginPath();ctx.moveTo(chartX,chartY+chartH/2);ctx.lineTo(chartX+chartW,chartY+chartH/2);ctx.stroke();
+  drawText(ctx,'position x(t)',chartX+6,chartY-6,{size:14,weight:500,color:c.text,italic:true});
+  drawText(ctx,'+A',chartX-6,chartY+8,{size:12,align:'right',color:c.muted});
+  drawText(ctx,'0',chartX-6,chartY+chartH/2+4,{size:12,align:'right',color:c.muted});
+  drawText(ctx,'\u2212A',chartX-6,chartY+chartH-2,{size:12,align:'right',color:c.muted});
+  ctx.strokeStyle=c.amber;ctx.lineWidth=2.5;ctx.beginPath();
+  const n=200;
+  for(let i=0;i<=n;i++){
+    const ti=i/n*8; const xi=A*Math.cos(w*(vizState.t*0.3-ti*0.15));
+    const px=chartX+i/n*chartW, py=chartY+chartH/2-xi*(chartH/2-5)/A;
+    i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);
+  }
+  ctx.stroke();
+  ctx.fillStyle=c.amber;ctx.beginPath();ctx.arc(chartX,chartY+chartH/2-x*(chartH/2-5)/A,4,0,Math.PI*2);ctx.fill();
+  drawText(ctx,'Period T = 2\u03C0\u221A(m/k) = '+T.toFixed(3)+' s    \u03C9 = '+w.toFixed(2)+' rad/s',W/2,40,{size:16,weight:500,align:'center',color:c.text,italic:true});
+}
+
+function drawMomentum(ctx,W,H,c){
+  const m1=+document.getElementById('vM1').value, m2=+document.getElementById('vM2').value, v1=4;
+  const vf=(m1*v1)/(m1+m2), r1=18+m1*5, r2=18+m2*5;
+  const y1=H*0.32, y2=H*0.72;
+  ctx.fillStyle=c.grid;ctx.fillRect(40,y1+30,W-80,2);ctx.fillRect(40,y2+30,W-80,2);
+  drawText(ctx,'Before collision',60,y1-38,{size:15,weight:500,color:c.muted,italic:true});
+  const c1x=220, c2x=540;
+  ctx.beginPath();ctx.arc(c1x,y1,r1,0,Math.PI*2);ctx.fillStyle=c.blue+'bb';ctx.fill();ctx.strokeStyle=c.blue;ctx.lineWidth=2;ctx.stroke();
+  drawText(ctx,m1+' kg',c1x,y1+5,{size:15,weight:500,align:'center',color:'#0C447C'});
+  ctx.beginPath();ctx.arc(c2x,y1,r2,0,Math.PI*2);ctx.fillStyle=c.muted+'55';ctx.fill();ctx.strokeStyle=c.muted;ctx.lineWidth=2;ctx.stroke();
+  drawText(ctx,m2+' kg',c2x,y1+5,{size:15,weight:500,align:'center',color:c.text});
+  arrow(ctx,c1x+r1+5,y1,c1x+r1+70,y1,c.coral,2.5);
+  drawText(ctx,'v\u2081 = '+v1+' m/s',c1x+r1+40,y1-14,{size:14,weight:500,align:'center',color:c.coral,italic:true});
+  drawText(ctx,'v\u2082 = 0',c2x,y1-r2-10,{size:14,align:'center',color:c.muted,italic:true});
+  drawText(ctx,'p = '+(m1*v1)+' + 0 = '+(m1*v1)+' kg\u00B7m/s',W/2,y1+55,{size:15,align:'center',color:c.purple,weight:500,italic:true});
+  ctx.strokeStyle=c.line;ctx.setLineDash([4,4]);ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(60,(y1+y2)/2+30);ctx.lineTo(W-60,(y1+y2)/2+30);ctx.stroke();ctx.setLineDash([]);
+  drawText(ctx,'After (stuck together)',60,y2-38,{size:15,weight:500,color:c.muted,italic:true});
+  const cR=18+(m1+m2)*3.5;
+  ctx.beginPath();ctx.arc(W/2,y2,cR,0,Math.PI*2);ctx.fillStyle=c.teal+'bb';ctx.fill();ctx.strokeStyle=c.teal;ctx.lineWidth=2;ctx.stroke();
+  drawText(ctx,(m1+m2)+' kg',W/2,y2+5,{size:15,weight:500,align:'center',color:'#085041'});
+  arrow(ctx,W/2+cR+5,y2,W/2+cR+70,y2,c.teal,2.5);
+  drawText(ctx,'vf = '+vf.toFixed(2)+' m/s',W/2+cR+40,y2-14,{size:14,weight:500,align:'center',color:c.teal,italic:true});
+  drawText(ctx,'p = '+((m1+m2)*vf).toFixed(1)+' kg\u00B7m/s  \u2713',W/2,y2+55,{size:15,align:'center',color:c.purple,weight:500,italic:true});
+  drawText(ctx,'Conservation of momentum:  m\u2081v\u2081 + m\u2082v\u2082 = (m\u2081+m\u2082)vf',W/2,30,{size:17,weight:500,align:'center',color:c.text,italic:true});
+}
+
+function drawThermo(ctx,W,H,c){
+  const Th=+document.getElementById('vTh').value, Tc=+document.getElementById('vTc').value;
+  const eta=(1-Tc/Th)*100;
+  const hotX=90, coldX=90, hotY=80, coldY=H-150;
+  ctx.fillStyle=c.coral+'55';ctx.strokeStyle=c.coral;ctx.lineWidth=2;
+  rr(ctx,hotX,hotY,180,70,10);ctx.fill();ctx.stroke();
+  drawText(ctx,'Hot reservoir',hotX+90,hotY+24,{size:15,weight:500,align:'center',color:'#712B13',italic:true});
+  drawText(ctx,'T\u2095 = '+Th+' K',hotX+90,hotY+50,{size:20,weight:500,align:'center',color:'#712B13'});
+  ctx.fillStyle=c.blue+'55';ctx.strokeStyle=c.blue;ctx.lineWidth=2;
+  rr(ctx,coldX,coldY,180,70,10);ctx.fill();ctx.stroke();
+  drawText(ctx,'Cold reservoir',coldX+90,coldY+24,{size:15,weight:500,align:'center',color:'#0C447C',italic:true});
+  drawText(ctx,'Tc = '+Tc+' K',coldX+90,coldY+50,{size:20,weight:500,align:'center',color:'#0C447C'});
+  const eX=W-280, eY=H/2-80, eW=220, eH=160;
+  ctx.fillStyle=c.amber+'44';ctx.strokeStyle=c.amber;ctx.lineWidth=2;
+  rr(ctx,eX,eY,eW,eH,14);ctx.fill();ctx.stroke();
+  drawText(ctx,'Carnot engine',eX+eW/2,eY+28,{size:16,weight:500,align:'center',color:'#633806',italic:true});
+  drawText(ctx,'\u03B7 = '+eta.toFixed(1)+'%',eX+eW/2,eY+84,{size:36,weight:500,align:'center',color:'#633806',italic:true});
+  drawText(ctx,'\u03B7 = 1 \u2212 Tc/T\u2095',eX+eW/2,eY+112,{size:15,align:'center',color:c.muted,italic:true});
+  drawText(ctx,'Work output = \u03B7\u00B7Qh',eX+eW/2,eY+140,{size:14,align:'center',color:c.muted,italic:true});
+  arrow(ctx,hotX+180,hotY+35,eX,eY+50,c.coral,3);
+  drawText(ctx,'Qh',(hotX+180+eX)/2,(hotY+35+eY+50)/2-8,{size:15,weight:500,align:'center',color:c.coral,italic:true});
+  arrow(ctx,eX,eY+eH-40,coldX+180,coldY+35,c.blue,3);
+  drawText(ctx,'Qc',(eX+coldX+180)/2,(eY+eH-40+coldY+35)/2+18,{size:15,weight:500,align:'center',color:c.blue,italic:true});
+  arrow(ctx,eX+eW,eY+eH/2,eX+eW+60,eY+eH/2,c.teal,3);
+  drawText(ctx,'W',eX+eW+30,eY+eH/2-10,{size:15,weight:500,align:'center',color:c.teal,italic:true});
+  drawText(ctx,'Carnot efficiency  (theoretical maximum)',W/2,30,{size:17,weight:500,align:'center',color:c.text,italic:true});
+}
+
+function drawEM(ctx,W,H,c){
+  const lam=+document.getElementById('vLambda').value, cy=H/2, k=2*Math.PI/lam, A=90;
+  const pad=60;
+  ctx.strokeStyle=c.grid;ctx.lineWidth=0.5;
+  for(let i=0;i<=8;i++){const x=pad+(W-pad*2)*i/8;ctx.beginPath();ctx.moveTo(x,pad);ctx.lineTo(x,H-pad);ctx.stroke();}
+  ctx.strokeStyle=c.line;ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(pad,cy);ctx.lineTo(W-pad,cy);ctx.stroke();
+  arrow(ctx,W-pad-20,cy,W-pad+5,cy,c.muted,1.5);
+  drawText(ctx,'x (propagation)',W-pad+12,cy+5,{size:14,color:c.muted,italic:true});
+  ctx.strokeStyle=c.coral;ctx.lineWidth=3;ctx.lineCap='round';ctx.beginPath();
+  for(let x=pad;x<=W-pad;x+=1){const y=cy-A*Math.sin(k*(x-pad)-vizState.t*3);x===pad?ctx.moveTo(x,y):ctx.lineTo(x,y);}
+  ctx.stroke();
+  for(let x=pad;x<W-pad;x+=40){const y=cy-A*Math.sin(k*(x-pad)-vizState.t*3);ctx.strokeStyle=c.coral+'66';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x,cy);ctx.lineTo(x,y);ctx.stroke();}
+  ctx.strokeStyle=c.blue;ctx.lineWidth=2.5;ctx.beginPath();
+  for(let x=pad;x<=W-pad;x+=1){const y=cy-A*0.6*Math.cos(k*(x-pad)-vizState.t*3);x===pad?ctx.moveTo(x,y):ctx.lineTo(x,y);}
+  ctx.stroke();
+  drawText(ctx,'E field (vertical)',pad+10,pad+20,{size:15,weight:500,color:c.coral,italic:true});
+  drawText(ctx,'B field (perpendicular)',pad+10,pad+44,{size:15,weight:500,color:c.blue,italic:true});
+  drawText(ctx,'Electromagnetic wave: E \u22A5 B, traveling at c = 1/\u221A(\u03BC\u2080\u03B5\u2080)',W/2,30,{size:17,weight:500,align:'center',color:c.text,italic:true});
+  drawText(ctx,'wavelength \u03BB = '+lam,W/2,H-25,{size:15,align:'center',color:c.muted,italic:true});
+}
+
+function restartPend(){vizState.t=0;vizState.pendTrail=[];}
+function drawPend(ctx,W,H,c){
+  const L=+document.getElementById('vLen').value, a0=(+document.getElementById('vAng').value)*Math.PI/180;
+  const g=9.8, w=Math.sqrt(g/L), T=2*Math.PI/w;
+  const th=a0*Math.cos(w*vizState.t*0.4);
+  const px=260, py=70, s=200/1.5*L;
+  const bx=px+s*Math.sin(th), by=py+s*Math.cos(th);
+  vizState.pendTrail.push({x:bx,y:by});if(vizState.pendTrail.length>180) vizState.pendTrail.shift();
+  ctx.strokeStyle=c.amber+'55';ctx.lineWidth=1.5;ctx.beginPath();
+  vizState.pendTrail.forEach((p,i)=>i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y));ctx.stroke();
+  ctx.strokeStyle=c.muted;ctx.setLineDash([3,4]);ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(px,py);ctx.lineTo(px,py+s);ctx.stroke();ctx.setLineDash([]);
+  ctx.strokeStyle=c.muted;ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(px,py);ctx.lineTo(bx,by);ctx.stroke();
+  ctx.beginPath();ctx.arc(px,py,6,0,Math.PI*2);ctx.fillStyle=c.muted;ctx.fill();
+  ctx.beginPath();ctx.arc(bx,by,22,0,Math.PI*2);ctx.fillStyle=c.blue+'dd';ctx.fill();ctx.strokeStyle=c.blue;ctx.lineWidth=2;ctx.stroke();
+  drawText(ctx,'m',bx,by+5,{size:16,weight:500,align:'center',color:'#042C53',italic:true});
+  drawText(ctx,'\u03B8 = '+(th*180/Math.PI).toFixed(1)+'\u00B0',px+20,py+40,{size:14,color:c.muted,weight:500,italic:true});
+  const Etot=0.5*L*a0*a0, Ek=0.5*L*Math.pow(w*a0*Math.sin(w*vizState.t*0.4),2), Ep=Etot-Ek;
+  const barX=560, barBot=H-80, barH=200;
+  drawText(ctx,'Energy',barX+60,barBot-barH-20,{size:15,weight:500,align:'center',color:c.text,italic:true});
+  drawText(ctx,'(KE \u2194 PE)',barX+60,barBot-barH-4,{size:13,align:'center',color:c.muted,italic:true});
+  const kH=Math.max(3,Ek/Etot*barH), pH=Math.max(3,Ep/Etot*barH);
+  ctx.fillStyle=c.teal+'aa';ctx.fillRect(barX,barBot-kH,50,kH);ctx.strokeStyle=c.teal;ctx.lineWidth=2;ctx.strokeRect(barX,barBot-kH,50,kH);
+  drawText(ctx,'KE',barX+25,barBot+20,{size:14,weight:500,align:'center',color:c.teal,italic:true});
+  drawText(ctx,(Ek/Etot*100).toFixed(0)+'%',barX+25,barBot-kH-6,{size:13,weight:500,align:'center',color:'#085041'});
+  ctx.fillStyle=c.coral+'aa';ctx.fillRect(barX+70,barBot-pH,50,pH);ctx.strokeStyle=c.coral;ctx.lineWidth=2;ctx.strokeRect(barX+70,barBot-pH,50,pH);
+  drawText(ctx,'PE',barX+95,barBot+20,{size:14,weight:500,align:'center',color:c.coral,italic:true});
+  drawText(ctx,(Ep/Etot*100).toFixed(0)+'%',barX+95,barBot-pH-6,{size:13,weight:500,align:'center',color:'#712B13'});
+  drawText(ctx,'L = T \u2212 V   Period T = '+T.toFixed(3)+' s   \u03B8\u2080 = '+(a0*180/Math.PI).toFixed(0)+'\u00B0',W/2,30,{size:17,weight:500,align:'center',color:c.text,italic:true});
+}
+
+function drawQuantum(ctx,W,H,c){
+  const n=+document.getElementById('vN').value;
+  const padL=80, padR=60, padBot=80;
+  const L=W-padL-padR, y0=H-padBot, boxH=220;
+  ctx.fillStyle=c.grid;ctx.fillRect(padL,y0-boxH,L,boxH);
+  ctx.strokeStyle=c.text;ctx.lineWidth=3;
+  ctx.beginPath();
+  ctx.moveTo(padL,y0-boxH-20);ctx.lineTo(padL,y0);ctx.lineTo(padL+L,y0);ctx.lineTo(padL+L,y0-boxH-20);
+  ctx.stroke();
+  drawText(ctx,'V = \u221E',padL-10,y0-boxH/2,{size:15,weight:500,align:'right',color:c.text,italic:true});
+  drawText(ctx,'V = \u221E',padL+L+10,y0-boxH/2,{size:15,weight:500,align:'left',color:c.text,italic:true});
+  drawText(ctx,'V = 0 (inside box)',padL+L/2,y0+22,{size:14,align:'center',color:c.muted,italic:true});
+  drawText(ctx,'x = 0',padL,y0+42,{size:13,align:'center',color:c.muted,italic:true});
+  drawText(ctx,'x = L',padL+L,y0+42,{size:13,align:'center',color:c.muted,italic:true});
+  const psiCy=y0-boxH+60, psiAmp=45;
+  ctx.strokeStyle=c.grid;ctx.lineWidth=0.5;
+  ctx.beginPath();ctx.moveTo(padL,psiCy);ctx.lineTo(padL+L,psiCy);ctx.stroke();
+  ctx.strokeStyle=c.purple;ctx.lineWidth=3;ctx.lineCap='round';ctx.beginPath();
+  for(let x=0;x<=L;x++){const y=psiCy-psiAmp*Math.sin(n*Math.PI*x/L);x===0?ctx.moveTo(padL+x,y):ctx.lineTo(padL+x,y);}
+  ctx.stroke();
+  drawText(ctx,'\u03C8(x)',padL-10,psiCy+5,{size:15,weight:500,align:'right',color:c.purple,italic:true});
+  const pCy=y0-50, pAmp=80;
+  ctx.strokeStyle=c.amber;ctx.lineWidth=3;ctx.fillStyle=c.amber+'44';
+  ctx.beginPath();ctx.moveTo(padL,pCy);
+  for(let x=0;x<=L;x++){const psi=Math.sin(n*Math.PI*x/L);const y=pCy-pAmp*psi*psi;ctx.lineTo(padL+x,y);}
+  ctx.lineTo(padL+L,pCy);ctx.closePath();ctx.fill();
+  ctx.beginPath();
+  for(let x=0;x<=L;x++){const psi=Math.sin(n*Math.PI*x/L);const y=pCy-pAmp*psi*psi;x===0?ctx.moveTo(padL+x,y):ctx.lineTo(padL+x,y);}
+  ctx.stroke();
+  drawText(ctx,'|\u03C8|\u00B2',padL-10,pCy+5,{size:15,weight:500,align:'right',color:c.amber,italic:true});
+  drawText(ctx,'Particle in a box:  n = '+n+',  E\u2099 \u221D n\u00B2',W/2,40,{size:17,weight:500,align:'center',color:c.text,italic:true});
+}
+
+function drawPhase(ctx,W,H,c){
+  const w=+document.getElementById('vOmega').value, E=+document.getElementById('vEnergy').value;
+  const pad=60, cx=W/2, cy=H/2+15;
+  ctx.strokeStyle=c.grid;ctx.lineWidth=0.5;
+  for(let i=1;i<8;i++){ctx.beginPath();ctx.moveTo(pad+(W-pad*2)*i/8,pad);ctx.lineTo(pad+(W-pad*2)*i/8,H-pad);ctx.stroke();}
+  for(let i=1;i<6;i++){ctx.beginPath();ctx.moveTo(pad,pad+(H-pad*2)*i/6);ctx.lineTo(W-pad,pad+(H-pad*2)*i/6);ctx.stroke();}
+  ctx.strokeStyle=c.line;ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(pad,cy);ctx.lineTo(W-pad,cy);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(cx,pad);ctx.lineTo(cx,H-pad);ctx.stroke();
+  drawText(ctx,'q (position)',W-pad+8,cy+5,{size:14,color:c.muted,weight:500,italic:true});
+  drawText(ctx,'p (momentum)',cx,pad-10,{size:14,color:c.muted,weight:500,align:'center',italic:true});
+  for(let e=1;e<=E;e++){
+    const s=Math.sqrt(e/E);
+    const a=(H-pad*2)/2*s*0.9, b=(W-pad*2)/2*s*0.9/w*2;
+    ctx.beginPath();ctx.ellipse(cx,cy,b,a,0,0,Math.PI*2);
+    if(e===E){ctx.strokeStyle=c.purple;ctx.lineWidth=2.5;}else{ctx.strokeStyle=c.purple+'44';ctx.lineWidth=1;}
+    ctx.stroke();
+  }
+  const qA=(W-pad*2)/2*0.9/w*2, pA=(H-pad*2)/2*0.9;
+  const qp=qA*Math.cos(w*vizState.t*0.3), pp=-pA*Math.sin(w*vizState.t*0.3);
+  vizState.phaseTrail.push({x:cx+qp,y:cy+pp});if(vizState.phaseTrail.length>300) vizState.phaseTrail.shift();
+  ctx.strokeStyle=c.amber;ctx.lineWidth=2;ctx.beginPath();
+  vizState.phaseTrail.forEach((p,i)=>i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y));ctx.stroke();
+  ctx.beginPath();ctx.arc(cx+qp,cy+pp,7,0,Math.PI*2);ctx.fillStyle=c.amber;ctx.fill();ctx.strokeStyle='#854F0B';ctx.lineWidth=1.5;ctx.stroke();
+  drawText(ctx,'Phase space of harmonic oscillator \u2014 \u03C9 = '+w+' rad/s',W/2,30,{size:17,weight:500,align:'center',color:c.text,italic:true});
+  drawText(ctx,'Each ellipse = constant energy level',W/2,52,{size:14,align:'center',color:c.muted,italic:true});
+}
+
+function drawRelativity(ctx,W,H,c){
+  const beta=(+document.getElementById('vBeta').value)/100, gamma=1/Math.sqrt(1-beta*beta);
+  const pad=70, gW=W-pad*2, gH=H-pad-80;
+  grid(ctx,W,H-60,c,pad,10,6);
+  for(let i=0;i<=10;i++){drawText(ctx,(i/10).toFixed(1),pad+gW*i/10,H-pad-40,{size:13,align:'center',color:c.muted});}
+  for(let i=0;i<=6;i++){drawText(ctx,(1+i*1.5).toFixed(1),pad-8,H-pad-60-gH*i/6+4,{size:13,align:'right',color:c.muted});}
+  drawText(ctx,'v / c',W-pad+10,H-pad-40,{size:15,weight:500,color:c.muted,italic:true});
+  drawText(ctx,'\u03B3',pad-8,pad-10,{size:20,weight:500,align:'right',color:c.muted,italic:true});
+  ctx.strokeStyle=c.purple;ctx.lineWidth=3;ctx.lineCap='round';ctx.beginPath();
+  for(let i=0;i<=99;i++){const bx=i/100;const gy=1/Math.sqrt(1-bx*bx);if(gy>10) break;const px=pad+bx*gW, py=H-pad-60-(gy-1)/9*gH; i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);}
+  ctx.stroke();
+  const cpx=pad+beta*gW, cpy=H-pad-60-Math.min((gamma-1)/9,1)*gH;
+  ctx.strokeStyle=c.coral;ctx.setLineDash([3,4]);ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(cpx,H-pad-60);ctx.lineTo(cpx,cpy);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(pad,cpy);ctx.lineTo(cpx,cpy);ctx.stroke();ctx.setLineDash([]);
+  ctx.beginPath();ctx.arc(cpx,cpy,8,0,Math.PI*2);ctx.fillStyle=c.coral;ctx.fill();ctx.strokeStyle='#712B13';ctx.lineWidth=2;ctx.stroke();
+  drawText(ctx,'\u03B3 = '+gamma.toFixed(3),cpx+15,cpy-10,{size:15,weight:500,color:c.coral,italic:true});
+  drawText(ctx,'\u03B3 = 1 / \u221A(1 \u2212 v\u00B2/c\u00B2)',W/2,30,{size:17,weight:500,align:'center',color:c.text,italic:true});
+  drawText(ctx,'v = '+beta.toFixed(2)+' c   \u2192   time runs '+gamma.toFixed(2)+'\u00D7 slower',W/2,52,{size:14,align:'center',color:c.muted,italic:true});
+}
+
+function drawFeasible(ctx,W,H,c){
+  const m=(+document.getElementById('vSlope').value)/10;
+  const pad=70, gW=W-pad*2, gH=H-pad-80;
+  const unit=Math.min(gW/7, gH/5);
+  const sx=x=>pad+x*unit, sy=y=>H-pad-60-y*unit;
+  grid(ctx,W,H-60,c,pad,7,5);
+  for(let i=0;i<=7;i++) drawText(ctx,i,sx(i),H-pad-40,{size:13,align:'center',color:c.muted});
+  for(let i=0;i<=5;i++) drawText(ctx,i,pad-8,sy(i)+4,{size:13,align:'right',color:c.muted});
+  drawText(ctx,'x\u2081',W-pad+10,H-pad-40,{size:16,weight:500,color:c.muted,italic:true});
+  drawText(ctx,'x\u2082',pad-8,pad-10,{size:16,weight:500,align:'right',color:c.muted,italic:true});
+  ctx.fillStyle=c.teal+'44';ctx.beginPath();
+  ctx.moveTo(sx(0),sy(0));
+  ctx.lineTo(sx(Math.min(m,6)),sy(0));
+  ctx.lineTo(sx(0),sy(Math.min(m,5)));
+  ctx.closePath();ctx.fill();ctx.strokeStyle=c.teal;ctx.lineWidth=2;ctx.stroke();
+  for(let k=0.5;k<=3;k+=0.5){ctx.strokeStyle=c.blue+'66';ctx.lineWidth=1;ctx.setLineDash([3,4]);ctx.beginPath();ctx.moveTo(sx(0),sy(k));ctx.lineTo(sx(k*2),sy(-k));ctx.stroke();}
+  ctx.setLineDash([]);
+  const opt=Math.min(m,5);
+  ctx.beginPath();ctx.arc(sx(0),sy(opt),9,0,Math.PI*2);ctx.fillStyle=c.coral;ctx.fill();ctx.strokeStyle='#712B13';ctx.lineWidth=2;ctx.stroke();
+  drawText(ctx,'optimum (0, '+opt.toFixed(1)+')',sx(0)+14,sy(opt)-10,{size:14,weight:500,color:c.coral,italic:true});
+  drawText(ctx,'max x\u2081 + 2x\u2082   s.t.  x\u2081 + x\u2082 \u2264 '+m.toFixed(1),W/2,30,{size:17,weight:500,align:'center',color:c.text,italic:true});
+  drawText(ctx,'optimum is always at a vertex of the feasible region',W/2,52,{size:14,align:'center',color:c.muted,italic:true});
+}
+
+function drawCritical(ctx,W,H,c){
+  const type=document.getElementById('vType').value||'min';
+  const cx=W/2, cy=H/2+10;
+  const levels=7;
+  for(let i=levels;i>=1;i--){
+    const r=15+i*22;
+    ctx.beginPath();
+    if(type==='min'){ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fillStyle=c.blue+(Math.round(20+i*15)).toString(16).padStart(2,'0');ctx.fill();ctx.strokeStyle=c.blue+'aa';ctx.lineWidth=1;ctx.stroke();}
+    else if(type==='max'){ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fillStyle=c.coral+(Math.round(20+i*15)).toString(16).padStart(2,'0');ctx.fill();ctx.strokeStyle=c.coral+'aa';ctx.lineWidth=1;ctx.stroke();}
+    else{const a=r*1.3, b=r*0.6;for(let t=0;t<=Math.PI*2;t+=0.04){const xr=a*Math.cos(t), yr=b*Math.sin(t);t===0?ctx.moveTo(cx+xr,cy+yr):ctx.lineTo(cx+xr,cy+yr);}ctx.closePath();ctx.strokeStyle=c.purple+'aa';ctx.lineWidth=1;ctx.stroke();}
+  }
+  if(type==='saddle'){
+    arrow(ctx,cx-90,cy,cx+90,cy,c.blue,2);
+    drawText(ctx,'min in x',cx,cy+28,{size:14,weight:500,align:'center',color:c.blue,italic:true});
+    arrow(ctx,cx,cy-60,cx,cy+60,c.coral,2);
+    drawText(ctx,'max in y',cx+55,cy,{size:14,weight:500,color:c.coral,italic:true});
+  }
+  ctx.beginPath();ctx.arc(cx,cy,8,0,Math.PI*2);ctx.fillStyle=c.amber;ctx.fill();ctx.strokeStyle='#633806';ctx.lineWidth=2;ctx.stroke();
+  drawText(ctx,'\u2207f = 0',cx+14,cy-12,{size:14,weight:500,color:c.amber,italic:true});
+  const msgs={min:'Local minimum \u2014 \u2207\u00B2f \u227B 0 (positive definite)',max:'Local maximum \u2014 \u2207\u00B2f \u227A 0 (negative definite)',saddle:'Saddle \u2014 \u2207\u00B2f has mixed eigenvalues'};
+  drawText(ctx,msgs[type],W/2,30,{size:17,weight:500,align:'center',color:c.text,italic:true});
+  drawText(ctx,'Contours: each loop has the same objective value',W/2,52,{size:14,align:'center',color:c.muted,italic:true});
+}
+
+function gdF(x){return 0.25*x*x*x*x - x*x + 0.5;}
+function resetGD(){vizState.gdPath=[];vizState.gdX=2.8;vizState.t=0;drawStatic();}
+function drawGradient(ctx,W,H,c){
+  const lr=(+document.getElementById('vLR').value)/100;
+  if(vizState.gdPath.length===0){vizState.gdX=2.8;for(let i=0;i<35;i++){const g=2*vizState.gdX*(vizState.gdX*vizState.gdX-1);vizState.gdPath.push({x:vizState.gdX,y:gdF(vizState.gdX)});vizState.gdX-=lr*g;vizState.gdX=Math.max(-3.5,Math.min(3.5,vizState.gdX));}}
+  const pad=70, gW=W-pad*2, gH=H-pad-90;
+  const xMin=-3.5,xMax=3.5,yMin=-0.7,yMax=5;
+  const toX=x=>pad+(x-xMin)/(xMax-xMin)*gW, toY=y=>pad+40+(1-(y-yMin)/(yMax-yMin))*gH;
+  ctx.strokeStyle=c.grid;ctx.lineWidth=0.5;
+  for(let i=0;i<=10;i++){const x=pad+gW*i/10;ctx.beginPath();ctx.moveTo(x,pad+40);ctx.lineTo(x,pad+40+gH);ctx.stroke();}
+  for(let i=0;i<=6;i++){const y=pad+40+gH*i/6;ctx.beginPath();ctx.moveTo(pad,y);ctx.lineTo(pad+gW,y);ctx.stroke();}
+  ctx.strokeStyle=c.line;ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(pad,toY(0));ctx.lineTo(pad+gW,toY(0));ctx.stroke();
+  ctx.beginPath();ctx.moveTo(toX(0),pad+40);ctx.lineTo(toX(0),pad+40+gH);ctx.stroke();
+  for(let xi=-3;xi<=3;xi++)drawText(ctx,xi,toX(xi),toY(0)+16,{size:13,align:'center',color:c.muted});
+  for(let yi=0;yi<=4;yi++)drawText(ctx,yi,toX(0)-8,toY(yi)+4,{size:13,align:'right',color:c.muted});
+  ctx.strokeStyle=c.blue;ctx.lineWidth=3;ctx.lineCap='round';ctx.beginPath();
+  for(let x=-3.5;x<=3.5;x+=0.04){const px=toX(x), py=toY(Math.min(yMax,gdF(x)));x===-3.5?ctx.moveTo(px,py):ctx.lineTo(px,py);}
+  ctx.stroke();
+  for(let mx of [-1,1]){ctx.beginPath();ctx.arc(toX(mx),toY(gdF(mx)),5,0,Math.PI*2);ctx.fillStyle=c.muted;ctx.fill();drawText(ctx,'x='+mx,toX(mx),toY(gdF(mx))+18,{size:12,align:'center',color:c.muted,italic:true});}
+  ctx.strokeStyle=c.coral;ctx.lineWidth=2;ctx.beginPath();
+  vizState.gdPath.forEach((p,i)=>{const px=toX(p.x), py=toY(Math.max(yMin,Math.min(yMax,p.y)));i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);});
+  ctx.stroke();
+  vizState.gdPath.forEach((p,i)=>{const px=toX(p.x), py=toY(Math.max(yMin,Math.min(yMax,p.y)));ctx.beginPath();ctx.arc(px,py,4,0,Math.PI*2);ctx.fillStyle=i===vizState.gdPath.length-1?c.teal:c.coral;ctx.fill();});
+  const fX=(vizState.gdPath[vizState.gdPath.length-1]||{}).x||0;
+  drawText(ctx,'Gradient descent on f(x) = \u00BCx\u2074 \u2212 x\u00B2',W/2,30,{size:17,weight:500,align:'center',color:c.text,italic:true});
+  drawText(ctx,'\u03B1 = '+lr.toFixed(2)+'   iterations = '+vizState.gdPath.length+'   x \u2192 '+fX.toFixed(3),W/2,52,{size:14,align:'center',color:c.muted,italic:true});
+}
+
+function drawLP(ctx,W,H,c){
+  const dir=(+document.getElementById('vObjDir').value)*Math.PI/180;
+  const pad=70;
+  const verts=[[5,0],[5,4],[3,6.5],[0,5.5],[0,1]].map(p=>[pad+p[0]*50,H-pad-70-p[1]*28]);
+  ctx.strokeStyle=c.grid;ctx.lineWidth=0.5;
+  for(let i=0;i<=8;i++){ctx.beginPath();ctx.moveTo(pad+i*50,pad);ctx.lineTo(pad+i*50,H-pad-40);ctx.stroke();}
+  for(let i=0;i<=7;i++){ctx.beginPath();ctx.moveTo(pad,H-pad-70-i*28);ctx.lineTo(W-pad,H-pad-70-i*28);ctx.stroke();}
+  ctx.strokeStyle=c.line;ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(pad,H-pad-70);ctx.lineTo(W-pad,H-pad-70);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(pad,pad);ctx.lineTo(pad,H-pad-70);ctx.stroke();
+  ctx.fillStyle=c.blue+'33';ctx.strokeStyle=c.blue;ctx.lineWidth=2;ctx.beginPath();
+  verts.forEach((p,i)=>i===0?ctx.moveTo(p[0],p[1]):ctx.lineTo(p[0],p[1]));ctx.closePath();ctx.fill();ctx.stroke();
+  let best=-1e9, bi=0;
+  verts.forEach((p,i)=>{const v=p[0]*Math.cos(dir)+(H-pad-70-p[1])*Math.sin(dir);if(v>best){best=v;bi=i;}});
+  verts.forEach((p,i)=>{ctx.beginPath();ctx.arc(p[0],p[1],i===bi?9:6,0,Math.PI*2);ctx.fillStyle=i===bi?c.coral:c.blue;ctx.fill();ctx.strokeStyle=i===bi?'#712B13':'#0C447C';ctx.lineWidth=2;ctx.stroke();drawText(ctx,'v'+i,p[0]+12,p[1]-8,{size:12,weight:500,color:i===bi?c.coral:c.muted,italic:true});});
+  const bx=verts[bi][0], by=verts[bi][1];
+  arrow(ctx,bx,by,bx+70*Math.cos(dir),by-70*Math.sin(dir),c.teal,3);
+  drawText(ctx,'maximize c\u1D40x',bx+90*Math.cos(dir),by-90*Math.sin(dir),{size:14,weight:500,align:'center',color:c.teal,italic:true});
+  drawText(ctx,'Optimum at vertex v'+bi,W/2,30,{size:17,weight:500,align:'center',color:c.text,italic:true});
+  drawText(ctx,'Simplex walks from vertex to vertex along edges',W/2,52,{size:14,align:'center',color:c.muted,italic:true});
+}
+
+function resetOpt(){vizState.optPath=[];updateViz();}
+function drawNewton(ctx,W,H,c){
+  const meth=document.getElementById('vMethod').value||'gd', lr=(+document.getElementById('vLR2').value)/100;
+  if(vizState.optPath.length===0){let x=3;for(let i=0;i<15;i++){vizState.optPath.push({x,y:x*x});if(meth==='gd') x-=lr*2*x; else x-=2*x/2;if(Math.abs(x)<1e-6) break;}}
+  const pad=70, gW=W-pad*2, gH=H-pad-90;
+  const xMin=-3.5,xMax=3.5,yMin=-1.5,yMax=12;
+  const toX=x=>pad+(x-xMin)/(xMax-xMin)*gW, toY=y=>pad+40+(1-(y-yMin)/(yMax-yMin))*gH;
+  ctx.strokeStyle=c.grid;ctx.lineWidth=0.5;
+  for(let i=0;i<=10;i++){const x=pad+gW*i/10;ctx.beginPath();ctx.moveTo(x,pad+40);ctx.lineTo(x,pad+40+gH);ctx.stroke();}
+  for(let i=0;i<=6;i++){const y=pad+40+gH*i/6;ctx.beginPath();ctx.moveTo(pad,y);ctx.lineTo(pad+gW,y);ctx.stroke();}
+  ctx.strokeStyle=c.line;ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(pad,toY(0));ctx.lineTo(pad+gW,toY(0));ctx.stroke();
+  ctx.beginPath();ctx.moveTo(toX(0),pad+40);ctx.lineTo(toX(0),pad+40+gH);ctx.stroke();
+  for(let xi=-3;xi<=3;xi++)drawText(ctx,xi,toX(xi),toY(0)+16,{size:13,align:'center',color:c.muted});
+  for(let yi=0;yi<=10;yi+=2)drawText(ctx,yi,toX(0)-8,toY(yi)+4,{size:13,align:'right',color:c.muted});
+  ctx.strokeStyle=c.blue;ctx.lineWidth=3;ctx.beginPath();
+  for(let x=-3.5;x<=3.5;x+=0.05){const px=toX(x), py=toY(Math.min(x*x,yMax));x===-3.5?ctx.moveTo(px,py):ctx.lineTo(px,py);}
+  ctx.stroke();
+  ctx.strokeStyle=c.coral;ctx.lineWidth=2;ctx.beginPath();
+  vizState.optPath.forEach((p,i)=>{const px=toX(p.x), py=toY(Math.min(p.y,yMax));i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);});
+  ctx.stroke();
+  vizState.optPath.forEach((p,i)=>{const px=toX(p.x), py=toY(Math.min(p.y,yMax));ctx.beginPath();ctx.arc(px,py,5,0,Math.PI*2);ctx.fillStyle=i===0?c.muted:i===vizState.optPath.length-1?c.teal:c.coral;ctx.fill();if(i<3)drawText(ctx,'step '+i,px+8,py-8,{size:12,color:c.muted,italic:true});});
+  drawText(ctx,(meth==='newton'?"Newton's method":"Gradient descent")+' on f(x) = x\u00B2',W/2,30,{size:17,weight:500,align:'center',color:c.text,italic:true});
+  drawText(ctx,meth==='newton'?'Exact step to the optimum (quadratic model)':vizState.optPath.length+' steps with \u03B1 = '+lr.toFixed(2),W/2,52,{size:14,align:'center',color:c.muted,italic:true});
+}
+
+function drawLagrange(ctx,W,H,c){
+  const cC=(+document.getElementById('vC').value)/10;
+  const cx=W/2, cy=H/2+15, s=50;
+  const pad=70;
+  ctx.strokeStyle=c.grid;ctx.lineWidth=0.5;
+  for(let x=-3;x<=3;x++){ctx.beginPath();ctx.moveTo(cx+x*s,pad);ctx.lineTo(cx+x*s,H-pad-40);ctx.stroke();}
+  for(let y=-2;y<=2;y++){ctx.beginPath();ctx.moveTo(pad,cy+y*s);ctx.lineTo(W-pad,cy+y*s);ctx.stroke();}
+  ctx.strokeStyle=c.line;ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(pad,cy);ctx.lineTo(W-pad,cy);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(cx,pad);ctx.lineTo(cx,H-pad-40);ctx.stroke();
+  for(let r=0.5;r<=3;r+=0.5){ctx.beginPath();ctx.arc(cx,cy,r*s,0,Math.PI*2);ctx.strokeStyle=c.blue+(r===1.5?'dd':'66');ctx.lineWidth=r===Math.round(cC*2)/2?2:1;ctx.stroke();if(r<=2.5) drawText(ctx,'f='+(r*r).toFixed(2),cx+r*s+4,cy-4,{size:12,color:c.blue,weight:500,italic:true});}
+  ctx.strokeStyle=c.coral;ctx.lineWidth=3;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(cx-cC*s*0.85,cy+cC*s*0.85);ctx.lineTo(cx+cC*s*0.85,cy-cC*s*0.85);ctx.stroke();
+  const ox=cx+cC/2*s, oy=cy-cC/2*s;
+  ctx.beginPath();ctx.arc(ox,oy,10,0,Math.PI*2);ctx.fillStyle=c.amber;ctx.fill();ctx.strokeStyle='#633806';ctx.lineWidth=2.5;ctx.stroke();
+  drawText(ctx,'('+(cC/2).toFixed(1)+', '+(cC/2).toFixed(1)+')',ox+16,oy-14,{size:14,weight:500,color:c.amber,italic:true});
+  drawText(ctx,'f = '+(2*(cC/2)*(cC/2)).toFixed(2),ox+16,oy+2,{size:13,color:c.muted,italic:true});
+  drawText(ctx,'x + y = '+cC.toFixed(1),cx+cC*s*0.85+10,cy-cC*s*0.85-6,{size:14,weight:500,color:c.coral,italic:true});
+  drawText(ctx,'\u2207f \u2225 \u2207h at optimum',W/2,30,{size:17,weight:500,align:'center',color:c.text,italic:true});
+  drawText(ctx,'Minimize f = x\u00B2 + y\u00B2  subject to  x + y = c',W/2,52,{size:14,align:'center',color:c.muted,italic:true});
+}
+
+function drawConvex(ctx,W,H,c){
+  const t=document.getElementById('vCvxType').value||'cvx';
+  const pad=70, gW=W-pad*2, gH=H-pad-90;
+  const xMin=-3,xMax=3,yMin=-0.5,yMax=6;
+  const toX=x=>pad+(x-xMin)/(xMax-xMin)*gW, toY=y=>pad+40+(1-(y-yMin)/(yMax-yMin))*gH;
+  grid(ctx,W,H-50,c,pad,8,5);
+  for(let xi=-3;xi<=3;xi++) drawText(ctx,xi,toX(xi),toY(0)+16,{size:13,align:'center',color:c.muted});
+  for(let yi=0;yi<=5;yi++) drawText(ctx,yi,toX(0)-8,toY(yi)+4,{size:13,align:'right',color:c.muted});
+  ctx.strokeStyle=c.line;ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(pad,toY(0));ctx.lineTo(pad+gW,toY(0));ctx.stroke();
+  ctx.beginPath();ctx.moveTo(toX(0),pad+40);ctx.lineTo(toX(0),pad+40+gH);ctx.stroke();
+  const f=t==='cvx'?x=>x*x*0.5+0.3:x=>Math.sin(x*1.5)*2+x*x*0.1+2.5;
+  ctx.strokeStyle=t==='cvx'?c.teal:c.coral;ctx.lineWidth=3;ctx.lineCap='round';ctx.beginPath();
+  let started=false;
+  for(let x=xMin;x<=xMax;x+=0.03){const y=f(x);if(y<yMin||y>yMax){started=false;continue;}const px=toX(x), py=toY(y);if(!started){ctx.moveTo(px,py);started=true;}else ctx.lineTo(px,py);}
+  ctx.stroke();
+  const px1=-2, px2=2;
+  ctx.strokeStyle=c.amber;ctx.lineWidth=2;ctx.setLineDash([5,4]);
+  ctx.beginPath();ctx.moveTo(toX(px1),toY(f(px1)));ctx.lineTo(toX(px2),toY(f(px2)));ctx.stroke();ctx.setLineDash([]);
+  ctx.beginPath();ctx.arc(toX(px1),toY(f(px1)),6,0,Math.PI*2);ctx.fillStyle=c.amber;ctx.fill();ctx.strokeStyle='#633806';ctx.lineWidth=2;ctx.stroke();
+  ctx.beginPath();ctx.arc(toX(px2),toY(f(px2)),6,0,Math.PI*2);ctx.fillStyle=c.amber;ctx.fill();ctx.stroke();
+  drawText(ctx,'x',toX(px1)-10,toY(f(px1))-10,{size:13,weight:500,color:c.amber,italic:true});
+  drawText(ctx,'y',toX(px2)+10,toY(f(px2))-10,{size:13,weight:500,color:c.amber,italic:true});
+  const msg=t==='cvx'?'Convex:  chord ABOVE curve \u2192 local = global':'Non-convex:  chord can dip BELOW \u2192 local \u2260 global';
+  drawText(ctx,msg,W/2,30,{size:17,weight:500,align:'center',color:c.text,italic:true});
+  drawText(ctx,'f(x) = '+(t==='cvx'?'\u00BDx\u00B2 + 0.3':'sin(1.5x)\u00B72 + 0.1x\u00B2 + 2.5'),W/2,52,{size:14,align:'center',color:c.muted,italic:true});
+}
+
+function drawInteger(ctx,W,H,c){
+  const depth=+document.getElementById('vDepth').value, cx=W/2, yTop=80;
+  function seededRandom(seed){let s=seed;return function(){s=(s*9301+49297)%233280;return s/233280;};}
+  const rnd=seededRandom(depth*17+42);
+  function node(x,y,lvl,val){
+    const pruned = lvl>0 && rnd()<0.25;
+    const isLeaf = lvl===depth;
+    const r=18;
+    ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);
+    ctx.fillStyle=isLeaf?c.teal+'bb':pruned?c.muted+'44':c.blue+'aa';ctx.fill();
+    ctx.strokeStyle=isLeaf?c.teal:pruned?c.muted:c.blue;ctx.lineWidth=2;ctx.stroke();
+    drawText(ctx,val,x,y+4,{size:13,weight:500,align:'center',color:isLeaf?'#085041':pruned?c.muted:'#0C447C'});
+    if(pruned){drawText(ctx,'pruned',x,y+r+16,{size:12,align:'center',color:c.muted,italic:true});return;}
+    if(lvl<depth){
+      const dy=70, dx=(W-140)/Math.pow(2,lvl+2);
+      ctx.strokeStyle=c.line;ctx.lineWidth=1.2;
+      ctx.beginPath();ctx.moveTo(x-r*0.6,y+r*0.7);ctx.lineTo(x-dx+r*0.6,y+dy-r*0.7);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(x+r*0.6,y+r*0.7);ctx.lineTo(x+dx-r*0.6,y+dy-r*0.7);ctx.stroke();
+      const pi=parseFloat(val);
+      drawText(ctx,'x \u2264 '+Math.floor(pi),(x+x-dx)/2-18,y+dy/2+3,{size:12,color:c.muted,align:'right',italic:true});
+      drawText(ctx,'x \u2265 '+(Math.floor(pi)+1),(x+x+dx)/2+18,y+dy/2+3,{size:12,color:c.muted,italic:true});
+      node(x-dx,y+dy,lvl+1,(pi-rnd()*0.5-0.2).toFixed(1));
+      node(x+dx,y+dy,lvl+1,(pi+rnd()*0.5+0.3).toFixed(1));
+    }
+  }
+  node(cx,yTop,0,'2.4');
+  drawText(ctx,'Branch-and-bound tree  (LP optimum x = 2.4, fractional)',W/2,30,{size:17,weight:500,align:'center',color:c.text,italic:true});
+  drawText(ctx,'Blue: active  |  Gray: pruned  |  Teal: integer leaf',W/2,52,{size:14,align:'center',color:c.muted,italic:true});
+}
+
+function drawSGD(ctx,W,H,c){
+  const noise=(+document.getElementById('vNoise').value)/100;
+  const cx=W/2, cy=H/2+10;
+  for(let r=0.4;r<=3;r+=0.5){ctx.beginPath();ctx.arc(cx,cy,r*40,0,Math.PI*2);ctx.strokeStyle=c.blue+Math.round(30+r*30).toString(16).padStart(2,'0');ctx.fillStyle=c.blue+'11';ctx.fill();ctx.lineWidth=1;ctx.stroke();}
+  if(vizState.gdPath.length===0){let x=2.3, y=1.8;for(let i=0;i<100;i++){const g=[2*x,2*y];const nx=(Math.random()-0.5)*noise*4, ny=(Math.random()-0.5)*noise*4;x-=0.04*g[0]+nx;y-=0.04*g[1]+ny;vizState.gdPath.push({x:cx+x*40,y:cy+y*40});}}
+  vizState.t+=0.8;
+  const idx=Math.min(Math.floor(vizState.t),vizState.gdPath.length-1);
+  ctx.strokeStyle=c.coral;ctx.lineWidth=1.8;ctx.lineCap='round';ctx.beginPath();
+  for(let i=0;i<=idx;i++){const p=vizState.gdPath[i];i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y);}
+  ctx.stroke();
+  const p=vizState.gdPath[idx];
+  ctx.beginPath();ctx.arc(p.x,p.y,7,0,Math.PI*2);ctx.fillStyle=c.teal;ctx.fill();ctx.strokeStyle='#085041';ctx.lineWidth=2;ctx.stroke();
+  ctx.beginPath();ctx.arc(cx,cy,5,0,Math.PI*2);ctx.fillStyle=c.amber;ctx.fill();
+  drawText(ctx,'true min',cx+10,cy-6,{size:13,weight:500,color:c.amber,italic:true});
+  drawText(ctx,'SGD on quadratic \u2014 noise \u03C3 = '+noise.toFixed(2),W/2,30,{size:17,weight:500,align:'center',color:c.text,italic:true});
+  drawText(ctx,'Noisy gradients trace a jittery path, expected direction is downhill',W/2,52,{size:14,align:'center',color:c.muted,italic:true});
+  drawText(ctx,'step '+idx+' / '+(vizState.gdPath.length-1),W-80,H-20,{size:13,color:c.muted,align:'right',italic:true});
+}
+
+function drawDuality(ctx,W,H,c){
+  const lam=(+document.getElementById('vLambda2').value)/10;
+  const pad=70, gW=W-pad*2, gH=H-pad-90;
+  const xMin=0,xMax=3,yMin=-2,yMax=6;
+  const toX=x=>pad+(x-xMin)/(xMax-xMin)*gW, toY=y=>pad+40+(1-(y-yMin)/(yMax-yMin))*gH;
+  grid(ctx,W,H-50,c,pad,8,5);
+  for(let xi=0;xi<=3;xi++) drawText(ctx,xi,toX(xi),toY(yMin)+16,{size:13,align:'center',color:c.muted});
+  for(let yi=-2;yi<=6;yi+=2) drawText(ctx,yi,toX(0)-8,toY(yi)+4,{size:13,align:'right',color:c.muted});
+  ctx.strokeStyle=c.line;ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(pad,toY(0));ctx.lineTo(pad+gW,toY(0));ctx.stroke();
+  const fp=x=>x*x-2*x+1, fL=x=>x*x-2*x+1+lam*(x-2);
+  ctx.strokeStyle=c.blue;ctx.lineWidth=3;ctx.lineCap='round';ctx.beginPath();
+  for(let x=xMin;x<=xMax;x+=0.02){const px=toX(x), py=toY(fp(x));x===xMin?ctx.moveTo(px,py):ctx.lineTo(px,py);}
+  ctx.stroke();
+  ctx.strokeStyle=c.coral;ctx.lineWidth=3;ctx.beginPath();
+  for(let x=xMin;x<=xMax;x+=0.02){const px=toX(x), py=toY(fL(x));x===xMin?ctx.moveTo(px,py):ctx.lineTo(px,py);}
+  ctx.stroke();
+  const xMinL=1-lam/2;
+  const gMin=fL(xMinL);
+  ctx.beginPath();ctx.arc(toX(xMinL),toY(gMin),7,0,Math.PI*2);ctx.fillStyle=c.amber;ctx.fill();ctx.strokeStyle='#633806';ctx.lineWidth=2;ctx.stroke();
+  ctx.strokeStyle=c.amber;ctx.setLineDash([4,4]);ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(pad,toY(gMin));ctx.lineTo(pad+gW,toY(gMin));ctx.stroke();ctx.setLineDash([]);
+  drawText(ctx,'g(\u03BB) = '+gMin.toFixed(2),toX(xMinL)+15,toY(gMin)-8,{size:14,weight:500,color:c.amber,italic:true});
+  drawText(ctx,'Primal min',toX(1)+8,toY(0)-12,{size:13,color:c.blue,weight:500,italic:true});
+  ctx.beginPath();ctx.arc(toX(1),toY(0),5,0,Math.PI*2);ctx.fillStyle=c.blue;ctx.fill();
+  drawText(ctx,'Duality: dual g(\u03BB) \u2264 primal f*',W/2,30,{size:17,weight:500,align:'center',color:c.text,italic:true});
+  drawText(ctx,'\u03BB = '+lam.toFixed(1)+'   \u2192   dual gives a LOWER BOUND on the primal optimum',W/2,52,{size:14,align:'center',color:c.muted,italic:true});
+}
+
+function drawAnnealing(ctx,W,H,c){
+  const T=(+document.getElementById('vTemp').value)/100;
+  const pad=70, gW=W-pad*2, gH=H-pad-90;
+  const xMin=0,xMax=6,yMin=-0.5,yMax=3;
+  const toX=x=>pad+(x-xMin)/(xMax-xMin)*gW, toY=y=>pad+40+(1-(y-yMin)/(yMax-yMin))*gH;
+  grid(ctx,W,H-50,c,pad,8,4);
+  for(let xi=0;xi<=6;xi++) drawText(ctx,xi,toX(xi),toY(yMin)+16,{size:13,align:'center',color:c.muted});
+  const f=x=>Math.sin(x*1.2)+Math.sin(x*0.5)*0.8+1.3;
+  ctx.strokeStyle=c.blue;ctx.lineWidth=3;ctx.lineCap='round';ctx.beginPath();
+  for(let x=xMin;x<=xMax;x+=0.02){const px=toX(x), py=toY(f(x));x===xMin?ctx.moveTo(px,py):ctx.lineTo(px,py);}
+  ctx.stroke();
+  if(vizState.gdPath.length===0){let x=1;for(let i=0;i<80;i++){const xn=Math.max(xMin,Math.min(xMax,x+(Math.random()-0.5)*T*2.5));const df=f(xn)-f(x);if(df<0||Math.random()<Math.exp(-df/Math.max(T,0.05))) x=xn;vizState.gdPath.push({x,y:f(x)});}}
+  vizState.t+=0.5;
+  const idx=Math.min(Math.floor(vizState.t),vizState.gdPath.length-1);
+  ctx.strokeStyle=c.coral+'99';ctx.lineWidth=1.5;ctx.beginPath();
+  for(let i=0;i<=idx;i++){const p=vizState.gdPath[i], px=toX(p.x), py=toY(p.y);i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);}
+  ctx.stroke();
+  const p=vizState.gdPath[idx];
+  ctx.beginPath();ctx.arc(toX(p.x),toY(p.y),7,0,Math.PI*2);ctx.fillStyle=c.amber;ctx.fill();ctx.strokeStyle='#633806';ctx.lineWidth=2;ctx.stroke();
+  drawText(ctx,'Simulated annealing \u2014 T = '+T.toFixed(2),W/2,30,{size:17,weight:500,align:'center',color:c.text,italic:true});
+  drawText(ctx,T>0.6?'High T: accepts bad moves, explores broadly':T>0.3?'Medium T: balanced search':'Low T: greedy local refinement',W/2,52,{size:14,align:'center',color:c.muted,italic:true});
+  drawText(ctx,'step '+idx+' / '+(vizState.gdPath.length-1),W-80,H-20,{size:13,color:c.muted,align:'right',italic:true});
+}
+
+function drawPareto(ctx,W,H,c){
+  const tr=(+document.getElementById('vTrade').value)/100;
+  const pad=70;
+  grid(ctx,W,H-50,c,pad,8,6);
+  for(let i=0;i<=6;i++) drawText(ctx,i,pad+(W-pad*2)*i/6,H-pad-30,{size:13,align:'center',color:c.muted});
+  for(let i=0;i<=6;i++) drawText(ctx,i,pad-8,H-pad-60-(H-pad-120)*i/6+4,{size:13,align:'right',color:c.muted});
+  drawText(ctx,'f\u2081 (cost)',W-pad+14,H-pad-30,{size:16,weight:500,color:c.muted,italic:true});
+  drawText(ctx,'f\u2082 (weight)',pad,pad-14,{size:16,weight:500,color:c.muted,italic:true});
+  const sx=x=>pad+x*50, sy=y=>H-pad-60-y*30;
+  function seeded(seed){let s=seed;return function(){s=(s*9301+49297)%233280;return s/233280;};}
+  const rnd=seeded(7);
+  const pts=[];
+  for(let i=0;i<45;i++){const x=0.4+rnd()*5, y=3/x+rnd()*1.5+0.2;pts.push([x,y]);}
+  pts.forEach(p=>{ctx.beginPath();ctx.arc(sx(p[0]),sy(p[1]),4,0,Math.PI*2);const dominated=pts.some(o=>o[0]<p[0]-0.05 && o[1]<p[1]-0.05);ctx.fillStyle=dominated?c.muted+'77':c.teal+'cc';ctx.fill();});
+  ctx.strokeStyle=c.teal;ctx.lineWidth=2.5;ctx.lineCap='round';ctx.beginPath();
+  for(let x=0.4;x<=5.5;x+=0.05){const y=3/x;if(y>5) continue;const px=sx(x), py=sy(y);x===0.4?ctx.moveTo(px,py):ctx.lineTo(px,py);}
+  ctx.stroke();
+  const tx=0.4+tr*5, ty=3/tx;
+  ctx.beginPath();ctx.arc(sx(tx),sy(ty),10,0,Math.PI*2);ctx.fillStyle=c.coral;ctx.fill();ctx.strokeStyle='#712B13';ctx.lineWidth=2.5;ctx.stroke();
+  drawText(ctx,'('+tx.toFixed(1)+', '+ty.toFixed(1)+')',sx(tx)+15,sy(ty)-12,{size:14,weight:500,color:c.coral,italic:true});
+  drawText(ctx,'Multi-objective: minimise cost AND weight',W/2,30,{size:17,weight:500,align:'center',color:c.text,italic:true});
+  drawText(ctx,'Teal curve = Pareto front (no point is dominated)',W/2,52,{size:14,align:'center',color:c.muted,italic:true});
+}
+
+async function askAI(){
+  const inp=document.getElementById('ai-input');const q=inp.value.trim();if(!q) return;
+  inp.value='';
+  const msgs=document.getElementById('ai-messages');
+  msgs.innerHTML+='<div class="ai-bubble user">'+q+'</div>';
+  const lid='l'+Date.now();
+  msgs.innerHTML+='<div class="ai-bubble loading" id="'+lid+'">Thinking...</div>';
+  msgs.scrollTop=msgs.scrollHeight;
+  const key=getApiKey();
+  if(!key){document.getElementById(lid).remove();msgs.innerHTML+='<div class="ai-bubble assistant">The AI Tutor is not configured yet. Click the \u2699 AI key button in the top right to add your Anthropic API key.</div>';msgs.scrollTop=msgs.scrollHeight;return;}
+  try{
+    const sp='You are a concise '+CURRICULUM[currentSubject].title+' tutor. The student is learning: "'+currentLesson.title+'". Context: '+currentLesson.desc+'. Give clear, focused answers in 2-4 sentences.';
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:sp,messages:[{role:'user',content:q}]})});
+    const data=await res.json();
+    if(data.error){throw new Error(data.error.message||'API error');}
+    const reply=(data.content?data.content.find(b=>b.type==='text'):null);
+    const text=reply?reply.text:'Sorry, I could not answer that.';
+    document.getElementById(lid).remove();
+    msgs.innerHTML+='<div class="ai-bubble assistant">'+text.replace(/</g,'&lt;')+'</div>';
+  }catch(e){document.getElementById(lid).remove();msgs.innerHTML+='<div class="ai-bubble assistant">Error: '+e.message+'</div>';}
+  msgs.scrollTop=msgs.scrollHeight;
+}
+function quickAsk(q){document.getElementById('ai-input').value=q;askAI();}
+document.getElementById('ai-input').addEventListener('keydown',e=>{if(e.key==='Enter') askAI();});
+
+currentLesson=Object.assign({},CURRICULUM.physics.levels[0].lessons[0],{level:'beginner',levelLabel:'Beginner'});
+buildSidebar();renderLesson();updateProgress();
+setTimeout(()=>startViz(currentLesson.viz),100);
+</script>
+</body>
+</html>
